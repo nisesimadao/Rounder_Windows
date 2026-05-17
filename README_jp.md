@@ -4,7 +4,7 @@
 
 macOS版をWindowsネイティブAPIで再現しました。通知領域アイコン、クリックスルーの最前面オーバーレイウィンドウ、JSONによる設定保存、マルチモニター選択、プリセット、そしてアニメーション付きの「すーぱーげーみんぐもーど」を搭載しています。バックグラウンドで静かに動作し、システムの通常の動作を妨げません。
 
-<img src="Assets/rounder.png" alt="Icon" />
+<img width="1044" height="732" alt="ScreenShot" src="https://github.com/user-attachments/assets/fd74ce79-cd3b-4534-9c91-334b7b7d4391" />
 
 [English README](./README.md)
 
