@@ -162,7 +162,12 @@
                     </Grid.RowDefinitions>
                     <ListBox x:Name="PresetList"/>
                     <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                        <Button Content="Apply" Style="{StaticResource {x:Static ui:ThemeKeys.AccentButtonStyleKey}}" Margin="0,0,0,8" Click="ApplyPreset_Click"/>
+                        <Button Content="Apply"
+                                Padding="14,7"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Margin="0,0,0,8"
+                                Click="ApplyPreset_Click"/>
                         <Button Content="Save Current..." Margin="0,0,0,8" Click="SaveCurrent_Click"/>
                         <Button Content="Edit..." Margin="0,0,0,8" Click="EditPreset_Click"/>
                         <Button Content="Delete" Margin="0,0,0,8" Click="DeletePreset_Click"/>
@@ -216,21 +221,26 @@
             </Grid.ColumnDefinitions>
             <TextBlock Text="Apply updates the live overlays immediately." VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button MinWidth="96" Margin="0,0,8,0" Padding="0" Click="Cancel_Click">
-                    <Border Background="Transparent" Padding="18,8" MinWidth="96">
-                        <TextBlock Text="Cancel" HorizontalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                    </Border>
-                </Button>
-                <Button MinWidth="96" Margin="0,0,8,0" Padding="0" Click="Apply_Click">
-                    <Border Background="Transparent" Padding="18,8" MinWidth="96">
-                        <TextBlock Text="Apply" HorizontalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                    </Border>
-                </Button>
-                <Button MinWidth="96" Padding="0" Style="{StaticResource {x:Static ui:ThemeKeys.AccentButtonStyleKey}}" Click="Ok_Click">
-                    <Border Background="Transparent" Padding="18,8" MinWidth="96">
-                        <TextBlock Text="OK" HorizontalAlignment="Center" Foreground="White"/>
-                    </Border>
-                </Button>
+                <Button Content="Cancel"
+                        MinWidth="96"
+                        Margin="0,0,8,0"
+                        Padding="18,8"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Click="Cancel_Click"/>
+                <Button Content="Apply"
+                        MinWidth="96"
+                        Margin="0,0,8,0"
+                        Padding="18,8"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Click="Apply_Click"/>
+                <Button Content="OK"
+                        MinWidth="96"
+                        Padding="18,8"
+                        HorizontalContentAlignment="Center"
+                        VerticalContentAlignment="Center"
+                        Click="Ok_Click"/>
             </StackPanel>
         </Grid>
     </Grid>
