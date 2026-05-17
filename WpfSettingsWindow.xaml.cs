@@ -260,7 +260,7 @@ public partial class WpfSettingsWindow : Window
 
     private void OpenGithub_Click(object sender, RoutedEventArgs e)
     {
-        Process.Start(new ProcessStartInfo("https://github.com/nisesimadao/rounder") { UseShellExecute = true });
+        Process.Start(new ProcessStartInfo("https://github.com/nisesimadao/rounder_windows") { UseShellExecute = true });
     }
 
     protected override void OnClosed(EventArgs e)

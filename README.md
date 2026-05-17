@@ -2,11 +2,11 @@
 
 Rounder for Windows is a lightweight notification-area app that draws rounded-corner overlays on selected monitors.
 
-It is a Windows port of the macOS Rounder app. The Windows version keeps the same core behavior where practical, while replacing macOS APIs with Windows-native equivalents: WinForms tray hosting, click-through topmost overlay windows and  WPF settings UI.
+It is a Windows port of the macOS Rounder app. The Windows version keeps the same core behavior where practical, while replacing macOS APIs with Windows-native equivalents: WinForms tray hosting, click-through topmost overlay windows, WPF settings UI, JSON settings, presets, multi-monitor selection, and the animated Super Duper Gaming Mode.
 
 ![Rounder icon](Assets/rounder.png)
 
-[日本語 README](./README_jp.md)
+[Japanese README](./README_jp.md)
 
 ## Features
 
