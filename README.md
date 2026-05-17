@@ -4,7 +4,7 @@ A tray utility to make the corners of your selected screen look rounded.
 
 This is a recreation of the macOS version using native Windows APIs. It features a notification area icon, a click-through topmost overlay window, JSON-based settings storage, multi-monitor selection, presets, and a "Super Gaming Mode" with animations. It runs quietly in the background and does not interfere with the system's normal operation.
 
-<img src="Assets/rounder.png" alt="Icon" />
+<img width="1044" height="732" alt="ScreenShot" src="https://github.com/user-attachments/assets/fd74ce79-cd3b-4534-9c91-334b7b7d4391" />
 
 [日本語版 README](./README_jp.md)
 
