@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationIcon>Assets\rounder.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="iNKORE.UI.WPF.Modern" Version="0.10.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\rounder.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\rounder.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\status.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

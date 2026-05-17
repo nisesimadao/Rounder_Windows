@@ -1,0 +1,237 @@
+<Window x:Class="Rounder.Windows.WpfSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.inkore.net/lib/ui/wpf/modern"
+        Style="{DynamicResource DefaultWindowStyle}"
+        ui:WindowHelper.UseModernWindowStyle="True"
+        ui:WindowHelper.SystemBackdropType="Mica"
+        ui:ThemeManager.IsThemeAware="True"
+        ui:ThemeManager.RequestedTheme="Default"
+        ui:TitleBar.Height="40"
+        Background="Transparent"
+        Title="Rounder Settings"
+        Width="940"
+        Height="720"
+        MinWidth="720"
+        MinHeight="520"
+        Icon="Assets/rounder.ico">
+    <Window.Resources>
+        <ResourceDictionary>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="24,12,24,20"
+          Background="Transparent"
+          TextElement.Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Margin="0,0,0,18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Image Width="42" Height="42" Source="Assets/rounder.png" Margin="0,0,14,0"/>
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Rounder" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                <TextBlock Text="Screen corner overlays tuned for multi-monitor Windows desktops." Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+        </Grid>
+
+        <ui:NavigationView Grid.Row="1"
+                           x:Name="Navigation"
+                           IsBackButtonVisible="Collapsed"
+                           IsSettingsVisible="False"
+                           PaneDisplayMode="LeftCompact"
+                           SelectionChanged="Navigation_SelectionChanged">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Content="Settings" Tag="Settings">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:FontIcon Icon="{x:Static ui:SegoeFluentIcons.Settings}"/>
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="Presets" Tag="Presets">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:FontIcon Icon="{x:Static ui:SegoeFluentIcons.Bookmarks}"/>
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="Permissions" Tag="Permissions">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:FontIcon Icon="{x:Static ui:SegoeFluentIcons.Shield}"/>
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem Content="Credits" Tag="Credits">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:FontIcon Icon="{x:Static ui:SegoeFluentIcons.Info}"/>
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+            </ui:NavigationView.MenuItems>
+
+            <Grid>
+                <ScrollViewer x:Name="SettingsPage" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="4,16,18,16">
+                        <GroupBox Header="General" Margin="0,0,0,16">
+                            <CheckBox x:Name="EnabledBox" Content="Enable rounded corners" Margin="14"/>
+                        </GroupBox>
+
+                        <GroupBox Header="Monitor Selection" Margin="0,0,0,16">
+                            <Grid Margin="14">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="130"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <ListBox x:Name="DisplayList"/>
+                                <Button Grid.Row="1" Content="Refresh monitors" HorizontalAlignment="Left" Margin="0,12,0,0" Click="RefreshMonitors_Click"/>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Appearance" Margin="0,0,0,16">
+                            <Grid Margin="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Text="Corner radius" VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                <Grid Grid.Column="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="RadiusText" Height="32" VerticalContentAlignment="Center"/>
+                                    <Slider x:Name="RadiusSlider" Grid.Column="1" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" Margin="14,0,0,0"/>
+                                </Grid>
+
+                                <TextBlock Grid.Row="1" Text="Corner color" VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,14,0,0"/>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,14,0,0">
+                                    <Border x:Name="ColorPreview" Width="42" Height="28" CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" Margin="0,0,10,0"/>
+                                    <Button Content="Black" Click="Black_Click" Margin="0,0,8,0"/>
+                                    <Button Content="White" Click="White_Click" Margin="0,0,8,0"/>
+                                    <Button Content="Gray" Click="Gray_Click" Margin="0,0,8,0"/>
+                                    <Button Content="Custom..." Click="CustomColor_Click"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="2" Text="Visible corners" VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,14,0,0"/>
+                                <UniformGrid Grid.Row="2" Grid.Column="1" Columns="2" Margin="0,14,0,0">
+                                    <CheckBox x:Name="TopLeftBox" Content="Top left" Margin="0,0,12,8"/>
+                                    <CheckBox x:Name="TopRightBox" Content="Top right" Margin="0,0,12,8"/>
+                                    <CheckBox x:Name="BottomLeftBox" Content="Bottom left" Margin="0,0,12,0"/>
+                                    <CheckBox x:Name="BottomRightBox" Content="Bottom right" Margin="0,0,12,0"/>
+                                </UniformGrid>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="Super Duper Gaming Mode">
+                            <Grid Margin="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Mode" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" VerticalAlignment="Center"/>
+                                <CheckBox x:Name="GamingBox" Grid.Column="1" Content="Enable animated rainbow glow"/>
+                                <TextBlock Grid.Row="1" Text="Speed" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" VerticalAlignment="Center" Margin="0,12,0,0"/>
+                                <TextBox x:Name="SpeedText" Grid.Row="1" Grid.Column="1" Width="90" Height="32" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                                <TextBlock Grid.Row="2" Text="Glow intensity" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" VerticalAlignment="Center" Margin="0,12,0,0"/>
+                                <TextBox x:Name="GlowText" Grid.Row="2" Grid.Column="1" Width="90" Height="32" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Grid x:Name="PresetsPage" Margin="4,16,18,16" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="180"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ListBox x:Name="PresetList"/>
+                    <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                        <Button Content="Apply" Style="{StaticResource {x:Static ui:ThemeKeys.AccentButtonStyleKey}}" Margin="0,0,0,8" Click="ApplyPreset_Click"/>
+                        <Button Content="Save Current..." Margin="0,0,0,8" Click="SaveCurrent_Click"/>
+                        <Button Content="Edit..." Margin="0,0,0,8" Click="EditPreset_Click"/>
+                        <Button Content="Delete" Margin="0,0,0,8" Click="DeletePreset_Click"/>
+                        <Button Content="Import..." Margin="0,0,0,8" Click="ImportPresets_Click"/>
+                        <Button Content="Export..." Click="ExportPresets_Click"/>
+                    </StackPanel>
+                    <TextBlock x:Name="PresetDetails" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,0" TextWrapping="Wrap" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </Grid>
+
+                <StackPanel x:Name="PermissionsPage" Margin="4,16,18,16" Visibility="Collapsed">
+                    <ui:InfoBar Title="Windows permissions" Message="Rounder for Windows does not require Accessibility, Screen Recording, or Automation permissions." IsOpen="True" Severity="Success"/>
+                    <TextBlock Text="Overlay windows: Granted" Margin="0,18,0,4" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    <TextBlock Text="Display changes: Granted" Margin="0,0,0,4" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    <TextBlock Text="Startup automation: Optional" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                </StackPanel>
+
+                <ScrollViewer x:Name="CreditsPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="4,16,18,16">
+                        <TextBlock Text="Credits" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+
+                        <TextBlock Text="Developer" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        <TextBlock Text="• Nisesimadao - Developer" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="• SwiftUI &amp; AppKit implementation" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,16"/>
+
+                        <TextBlock Text="Technology" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        <TextBlock Text="• Core Graphics drawing engine" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="• NSWindow overlay system" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="• UserDefaults settings management" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Text="• Windows port: .NET 8, WinForms tray/overlay host, WPF settings UI, iNKORE.UI.WPF.Modern, GDI+, and Win32 window styles" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                        <TextBlock Text="License" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        <TextBlock Text="• MIT License" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="• Open source project" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,16"/>
+
+                        <Separator Margin="0,0,0,16"/>
+
+                        <TextBlock Text="Support" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                        <TextBlock Text="Report bugs and feature requests through the GitHub repository." Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,10"/>
+                        <Button HorizontalAlignment="Left" Click="OpenGithub_Click">
+                            <ui:IconAndText Icon="{x:Static ui:SegoeFluentIcons.OpenInNewWindow}" Content="Open GitHub"/>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </ui:NavigationView>
+
+        <Grid Grid.Row="2" Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Apply updates the live overlays immediately." VerticalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button MinWidth="96" Margin="0,0,8,0" Padding="0" Click="Cancel_Click">
+                    <Border Background="Transparent" Padding="18,8" MinWidth="96">
+                        <TextBlock Text="Cancel" HorizontalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    </Border>
+                </Button>
+                <Button MinWidth="96" Margin="0,0,8,0" Padding="0" Click="Apply_Click">
+                    <Border Background="Transparent" Padding="18,8" MinWidth="96">
+                        <TextBlock Text="Apply" HorizontalAlignment="Center" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    </Border>
+                </Button>
+                <Button MinWidth="96" Padding="0" Style="{StaticResource {x:Static ui:ThemeKeys.AccentButtonStyleKey}}" Click="Ok_Click">
+                    <Border Background="Transparent" Padding="18,8" MinWidth="96">
+                        <TextBlock Text="OK" HorizontalAlignment="Center" Foreground="White"/>
+                    </Border>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
