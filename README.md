@@ -1,120 +1,115 @@
-# <img src="Assets/rounder.png" width="40" vertical-align="middle" /> Rounder for Windows
+# Rounder for Windows
 
-A tray utility that makes selected screens look like they have rounded corners.
+Rounder for Windows is a lightweight notification-area app that draws rounded-corner overlays on selected monitors.
 
-It recreates the macOS version with Windows-native APIs: a notification area icon, click-through topmost overlay windows, JSON settings, multi-monitor selection, presets, and the animated Super Duper Gaming Mode. It runs quietly in the background and does not interfere with normal system behavior.
+It is a Windows port of the macOS Rounder app. The Windows version keeps the same core behavior where practical, while replacing macOS APIs with Windows-native equivalents: WinForms tray hosting, click-through topmost overlay windows and  WPF settings UI.
 
-<img src="Assets/rounder.png" alt="Icon" />
+![Rounder icon](Assets/rounder.png)
 
-[日本語版READMEはこちら](./README_jp.md)
-
-## Project Structure
-
-```
-Rounder_Windows/
-├── RounderApplicationContext.cs # Main application logic and tray icon
-├── OverlayManager.cs            # Manages life cycle of overlay windows
-├── CornerOverlayForm.cs         # Click-through overlay window (GDI+)
-├── WpfSettingsWindow.xaml       # Modern WPF settings UI
-├── AppSettings.cs               # Data model for app configuration
-├── CornerPreset.cs              # Data model for corner presets
-├── JsonStore.cs                 # Local JSON storage for settings/presets
-├── AppTheme.cs                 # Theme detection and management
-├── AppAssets.cs                 # Embedded icon/image asset management
-├── Assets/                      # App icon and images
-├── Rounder_Windows.csproj       # .NET Project file
-└── README.md                    # This file
-```
+[日本語 README](./README_jp.md)
 
 ## Features
 
-- **Background operation**: Runs from the Windows notification area (System Tray)
-- **Real-time configuration**: Instantly adjust corner radius and color
-- **Individual corner control**: Toggle each corner independently
-- **Preset functionality**: Save and switch between favorite settings
-- **Import/Export**: Share and backup presets in JSON format
-- **Super Duper Gaming Mode**: Animated rainbow effects and glow
-- **Multi-monitor support**: Select which monitors to apply rounded corners to
-- **Monitor refresh**: Manually refresh monitor list in settings
-- **Modern Interface**: Fluent Design UI using ModernWPF
-- **Lightweight and stable**: Minimal CPU and memory usage
+- Runs quietly from the Windows notification area.
+- Left-click or double-click the tray icon to open settings.
+- Toggle rounded-corner overlays on or off from the tray menu.
+- Choose which monitors receive overlays.
+- Adjust radius, color, visible corners, and gaming-mode animation.
+- Save, edit, import, and export presets as JSON.
+- Uses a Fluent-style WPF settings window with light/dark theme support.
+- Per-monitor DPI aware for mixed scaling environments.
 
-## System Requirements
+## Requirements
 
 - Windows 10 or Windows 11
 - .NET 8.0 Desktop Runtime
+- .NET 8.0 SDK if building from source
 
-## Installation
+## Build
 
-### Prebuilt App
-
-1. Download the latest version from [Releases](https://github.com/nisesimadao/rounder/releases)
-2. Extract the ZIP file
-3. Run `Rounder_Windows.exe`
-
-### Build from Source
+From this directory:
 
 ```powershell
-# From the project directory
-dotnet build -c Release
+dotnet build .\Rounder_Windows.csproj -c Release
 ```
 
-## Usage
+The executable is written to:
 
-### Daily Use
+```text
+bin\Release\net8.0-windows\Rounder_Windows.exe
+```
 
-- **System Tray**: Double-click the Rounder icon to open settings
-- **Adjust settings**: Change corner radius (0–40px) and color in real time
-- **Individual corners**: Toggle each corner independently (2x2 grid layout)
-- **Enable/disable**: Toggle rounded corner effect on or off from the tray menu
-- **Quit**: Fully exit the app from the tray menu
+If a previous copy of Rounder is running, close it from the tray menu before rebuilding. Windows will lock the executable while the app is running.
 
-### Preset Features
+## Run
 
-- **Apply presets**: One-click apply saved configurations
-- **Save current settings**: Create new preset from current configuration
-- **Edit presets**: Rename or delete existing presets
-- **Import/Export**: Share and backup presets in JSON format
+```powershell
+.\bin\Release\net8.0-windows\Rounder_Windows.exe
+```
 
-## Configuration Options
+After launch, Rounder appears in the notification area. Click the tray icon to open settings, or right-click it for the menu.
 
-### General Settings
-- **Corner radius**: Adjustable from 0 to 40 pixels
-- **Corner color**: Choose via color picker or standard colors
-- **Corner visibility**: Toggle each corner independently
-- **Enable**: Toggle the rounded corner effect
-- **Monitor selection**: Choose which monitors to apply rounded corners to
-- **Refresh monitors**: Manually refresh the monitor list
+## Settings
+
+### General
+
+- Enable or disable rounded corners.
+- Refresh and select monitors.
+- Set corner radius from 0 to 40 pixels.
+- Pick corner color with quick presets or a custom color picker.
+- Toggle each corner independently.
+
+### Presets
+
+- Apply saved presets.
+- Save the current settings as a new preset.
+- Edit or delete existing presets.
+- Import and export preset files.
 
 ### Super Duper Gaming Mode
-- **Enable**: Rainbow animation effects and glow
-- **Speed control**: Adjust animation speed
-- **Glow intensity**: Adjust the glow effect strength
 
-## Technical Details
+- Enables animated rainbow/glow overlays.
+- Provides speed and glow intensity controls.
 
-### Core Technologies
-- **.NET 8 (C#)**: Modern runtime
-- **Windows Forms**: Tray icon and overlay host
-- **WPF (ModernWPF)**: Settings UI with Fluent Design
-- **GDI+**: High-performance overlay drawing
-- **Win32 API**: Low-level window style manipulation (WS_EX_TRANSPARENT, etc.)
-- **System.Text.Json**: Settings persistence
+## Implementation Notes
 
-### Performance
-- **Low overhead**: Minimal CPU usage
-- **Memory efficient**: Native Windows optimizations
-- **Real-time updates**: Changes apply instantly using event-driven architecture
+- Target framework: .NET 8, `net8.0-windows`
+- Tray/app lifetime: Windows Forms `ApplicationContext` and `NotifyIcon`
+- Settings UI: WPF with `iNKORE.UI.WPF.Modern`
+- Overlay drawing: WinForms topmost layered windows and GDI+
+- Click-through behavior: Win32 extended window styles such as `WS_EX_TRANSPARENT`
+- Settings storage: JSON under `%AppData%\Rounder`
+- DPI behavior: `HighDpiMode.PerMonitorV2`
+
+## Project Structure
+
+```text
+Rounder_Windows/
+|-- Assets/                      App icon and image assets
+|-- AppAssets.cs                  Embedded icon/image loading
+|-- AppSettings.cs                Settings model
+|-- AppTheme.cs                   Windows theme detection helpers
+|-- CornerOverlayForm.cs          Click-through overlay window
+|-- CornerPreset.cs               Preset model
+|-- JsonStore.cs                  JSON settings and preset storage
+|-- OverlayManager.cs             Overlay lifecycle management
+|-- PresetEditorForm.cs           Preset editing dialog
+|-- Program.cs                    STA entry point and DPI setup
+|-- RounderApplicationContext.cs  Tray icon and app lifetime
+|-- WpfSettingsWindow.xaml        Fluent-style settings window
+|-- WpfThemeBootstrap.cs          WPF/iNKORE theme bootstrap
+|-- Rounder_Windows.csproj        Project file
+|-- README.md                     English README
+`-- README_jp.md                  Japanese README
+```
 
 ## Troubleshooting
 
-### Common Issues
+**The corners are not visible.**  
+Check that Rounder is enabled and that the target monitor is selected.
 
-**Q: Rounded corners are not visible**  
-A: Ensure the app is enabled in the settings or tray menu. Check if the correct monitors are selected.
+**The overlay is hidden behind some apps.**  
+Exclusive fullscreen apps, secure desktops such as UAC, and the lock screen can appear above normal topmost windows.
 
-**Q: Overlay is not above some windows**  
-A: Exclusive fullscreen games, secure desktops (UAC), and the lock screen may appear above the overlay.
-
-**Q: High DPI Scaling**  
-A: The app is PerMonitorV2 DPI aware and should scale correctly across different monitors.
+**The build fails because `Rounder_Windows.exe` is locked.**  
+Exit the running app from the tray menu, or stop the `Rounder_Windows` process, then build again.
