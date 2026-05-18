@@ -12,6 +12,7 @@
 
 # Output of dotnet publish
 publish/
+artifacts/
 
 # Log files
 *.log

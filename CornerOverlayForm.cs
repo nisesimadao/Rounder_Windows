@@ -21,6 +21,8 @@ public sealed class CornerOverlayForm : Form
     private const uint SwpNoMove = 0x0002;
     private const uint SwpNoActivate = 0x0010;
     private const uint SwpShowWindow = 0x0040;
+    private const uint SwpNoOwnerZOrder = 0x0200;
+    private const uint SwpNoSendChanging = 0x0400;
 
     private static readonly Color TransparentKeyColor = Color.FromArgb(255, 1, 2, 3);
     private readonly CornerKind corner;
@@ -28,6 +30,7 @@ public sealed class CornerOverlayForm : Form
     private readonly int padding;
     private readonly AppSettings settings;
     private readonly System.Windows.Forms.Timer animationTimer;
+    private readonly System.Windows.Forms.Timer zOrderTimer;
     private double hue;
 
     public CornerOverlayForm(CornerKind corner, Rectangle screenBounds, int radius, AppSettings settings)
@@ -53,6 +56,8 @@ public sealed class CornerOverlayForm : Form
             hue = (hue + 0.004 * (double)Math.Max(0.1m, settings.GamingSpeed)) % 1.0;
             Invalidate();
         };
+        zOrderTimer = new System.Windows.Forms.Timer { Interval = 1000 };
+        zOrderTimer.Tick += (_, _) => KeepAboveTaskbar();
 
         if (settings.SuperGamingMode)
         {
@@ -60,7 +65,8 @@ public sealed class CornerOverlayForm : Form
         }
 
         Show();
-        SetWindowPos(Handle, HwndTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow);
+        KeepAboveTaskbar();
+        zOrderTimer.Start();
     }
 
     protected override bool ShowWithoutActivation => true;
@@ -103,9 +109,28 @@ public sealed class CornerOverlayForm : Form
         {
             animationTimer.Stop();
             animationTimer.Dispose();
+            zOrderTimer.Stop();
+            zOrderTimer.Dispose();
         }
 
         base.Dispose(disposing);
+    }
+
+    private void KeepAboveTaskbar()
+    {
+        if (!IsHandleCreated || IsDisposed)
+        {
+            return;
+        }
+
+        SetWindowPos(
+            Handle,
+            HwndTopmost,
+            0,
+            0,
+            0,
+            0,
+            SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow | SwpNoOwnerZOrder | SwpNoSendChanging);
     }
 
     private Rectangle CalculateBounds(Rectangle screen)

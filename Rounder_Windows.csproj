@@ -8,13 +8,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Assets\rounder.ico</ApplicationIcon>
+    <Company>Nisesimadao</Company>
+    <Authors>Nisesimadao</Authors>
+    <Product>Rounder for Windows</Product>
+    <AssemblyTitle>Rounder for Windows</AssemblyTitle>
+    <FileDescription>Rounder for Windows</FileDescription>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="iNKORE.UI.WPF.Modern" Version="0.10.0" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Assets\rounder.ico" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Assets\rounder.png" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Assets\status.png" CopyToOutputDirectory="PreserveNewest" />
+    <Resource Include="Assets\rounder.ico" />
+    <Resource Include="Assets\rounder.png" />
+    <Resource Include="Assets\status.png" />
   </ItemGroup>
 </Project>

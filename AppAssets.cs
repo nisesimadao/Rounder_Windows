@@ -1,5 +1,6 @@
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Windows.Resources;
 
 namespace Rounder.Windows;
 
@@ -10,13 +11,25 @@ public static class AppAssets
     public static Icon AppIcon()
     {
         var path = Path.Combine(AssetDirectory, "rounder.ico");
-        return File.Exists(path) ? new Icon(path) : SystemIcons.Application;
+        if (File.Exists(path))
+        {
+            return new Icon(path);
+        }
+
+        using var stream = OpenResource("rounder.ico");
+        return stream is not null ? new Icon(stream) : SystemIcons.Application;
     }
 
     public static Image? HeaderImage()
     {
         var path = Path.Combine(AssetDirectory, "rounder.png");
-        return File.Exists(path) ? Image.FromFile(path) : null;
+        if (File.Exists(path))
+        {
+            return Image.FromFile(path);
+        }
+
+        using var stream = OpenResource("rounder.png");
+        return stream is not null ? new Bitmap(stream) : null;
     }
 
     public static ImageList TabImages()
@@ -42,6 +55,12 @@ public static class AppAssets
         using var brush = new SolidBrush(Color.FromArgb(50, 58, 69));
         draw(graphics, pen, brush);
         return bitmap;
+    }
+
+    private static Stream? OpenResource(string fileName)
+    {
+        var resource = System.Windows.Application.GetResourceStream(new Uri($"/Assets/{fileName}", UriKind.Relative));
+        return resource?.Stream;
     }
 
     private static void DrawSliders(Graphics graphics, Pen pen, Brush brush)

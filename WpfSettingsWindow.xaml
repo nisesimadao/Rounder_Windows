@@ -14,7 +14,7 @@
         Height="720"
         MinWidth="720"
         MinHeight="520"
-        Icon="Assets/rounder.ico">
+        Icon="pack://application:,,,/Assets/rounder.ico">
     <Window.Resources>
         <ResourceDictionary>
         </ResourceDictionary>
@@ -34,7 +34,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Image Width="42" Height="42" Source="Assets/rounder.png" Margin="0,0,14,0"/>
+            <Image Width="42" Height="42" Source="pack://application:,,,/Assets/rounder.png" Margin="0,0,14,0"/>
             <StackPanel Grid.Column="1">
                 <TextBlock Text="Rounder" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
                 <TextBlock Text="Screen corner overlays tuned for multi-monitor Windows desktops." Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>

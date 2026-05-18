@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Rounder.Windows;
 
 public sealed class RounderApplicationContext : ApplicationContext
@@ -5,16 +7,20 @@ public sealed class RounderApplicationContext : ApplicationContext
     private readonly NotifyIcon notifyIcon;
     private readonly OverlayManager overlayManager;
     private readonly List<CornerPreset> presets;
+    private readonly System.Windows.Forms.Timer restartTimer;
     private AppSettings settings;
     private WpfSettingsWindow? settingsWindow;
+    private bool isRestarting;
 
     public RounderApplicationContext()
     {
         settings = JsonStore.LoadSettings();
         EnsureDisplayDefaults();
         presets = JsonStore.LoadPresets();
+        restartTimer = new System.Windows.Forms.Timer { Interval = 2000 };
+        restartTimer.Tick += (_, _) => RestartApplication();
         overlayManager = new OverlayManager(settings);
-        overlayManager.DisplaySettingsChanged += (_, _) => EnsureDisplayDefaults();
+        overlayManager.DisplaySettingsChanged += (_, _) => ScheduleRestartAfterDisplayChange();
         overlayManager.Recreate();
 
         notifyIcon = new NotifyIcon
@@ -37,8 +43,42 @@ public sealed class RounderApplicationContext : ApplicationContext
         {
             settings.HasLaunchedBefore = true;
             JsonStore.SaveSettings(settings);
-            ShowSettings();
         }
+
+        ShowSettings();
+    }
+
+    private void ScheduleRestartAfterDisplayChange()
+    {
+        EnsureDisplayDefaults();
+        restartTimer.Stop();
+        restartTimer.Start();
+    }
+
+    private void RestartApplication()
+    {
+        if (isRestarting)
+        {
+            return;
+        }
+
+        isRestarting = true;
+        restartTimer.Stop();
+        JsonStore.SaveSettings(settings);
+        JsonStore.SavePresets(presets);
+
+        var executablePath = Environment.ProcessPath;
+        if (!string.IsNullOrWhiteSpace(executablePath))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = executablePath,
+                WorkingDirectory = AppContext.BaseDirectory,
+                UseShellExecute = true
+            });
+        }
+
+        ExitThread();
     }
 
     private ContextMenuStrip BuildMenu()
@@ -108,6 +148,8 @@ public sealed class RounderApplicationContext : ApplicationContext
     protected override void ExitThreadCore()
     {
         settingsWindow?.Close();
+        restartTimer.Stop();
+        restartTimer.Dispose();
         overlayManager.Dispose();
         notifyIcon.Visible = false;
         notifyIcon.Dispose();
