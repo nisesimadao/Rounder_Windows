@@ -1,0 +1,130 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing or new release tag, for example v2.1.4. Leave empty to build artifacts only."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  PROJECT_PATH: Rounder_Windows.csproj
+  PUBLISH_DIR: artifacts/release/Rounder_Windows-win-x64-singlefile
+  INSTALLER_DIR: artifacts/installer
+  DOTNET_VERSION: "9.0.x"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore $env:PROJECT_PATH
+
+      - name: Build
+        run: dotnet build $env:PROJECT_PATH -c Release --no-restore
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content $env:PROJECT_PATH
+          $projectVersion = $project.Project.PropertyGroup.Version | Select-Object -First 1
+          if (-not $projectVersion) {
+            $projectVersion = "0.0.0"
+          }
+
+          $releaseTag = "${{ github.event.inputs.release_tag }}"
+          if (-not $releaseTag -and "${{ github.ref_type }}" -eq "tag") {
+            $releaseTag = "${{ github.ref_name }}"
+          }
+
+          "project_version=$projectVersion" >> $env:GITHUB_OUTPUT
+          "release_tag=$releaseTag" >> $env:GITHUB_OUTPUT
+
+      - name: Publish single-file app
+        run: >
+          dotnet publish $env:PROJECT_PATH
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=None
+          -p:DebugSymbols=false
+          -o $env:PUBLISH_DIR
+
+      - name: Package single-file zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/release | Out-Null
+          Compress-Archive -Path "$env:PUBLISH_DIR/Rounder_Windows.exe" -DestinationPath "artifacts/release/Rounder_Windows-win-x64-singlefile.zip" -Force
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Inno Setup installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:INSTALLER_DIR | Out-Null
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc `
+            "/DMyAppVersion=${{ steps.version.outputs.project_version }}" `
+            "/DPublishDir=$env:GITHUB_WORKSPACE\$env:PUBLISH_DIR" `
+            "installer\Rounder_Windows.iss"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rounder_Windows-${{ github.sha }}
+          path: |
+            ${{ env.PUBLISH_DIR }}/Rounder_Windows.exe
+            artifacts/release/Rounder_Windows-win-x64-singlefile.zip
+            ${{ env.INSTALLER_DIR }}/Rounder_Windows_Setup.exe
+
+      - name: Create or update GitHub release
+        if: steps.version.outputs.release_tag != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          PROJECT_VERSION: ${{ steps.version.outputs.project_version }}
+        run: |
+          $releaseExists = $true
+          gh release view $env:RELEASE_TAG *> $null
+          if ($LASTEXITCODE -ne 0) {
+            $releaseExists = $false
+          }
+
+          if (-not $releaseExists) {
+            gh release create $env:RELEASE_TAG `
+              --target "${{ github.sha }}" `
+              --title "Rounder for Windows $env:RELEASE_TAG" `
+              --notes "Automated Windows release for Rounder $env:PROJECT_VERSION."
+          }
+
+          gh release upload $env:RELEASE_TAG `
+            "$env:PUBLISH_DIR/Rounder_Windows.exe" `
+            "artifacts/release/Rounder_Windows-win-x64-singlefile.zip" `
+            "$env:INSTALLER_DIR/Rounder_Windows_Setup.exe" `
+            --clobber

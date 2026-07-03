@@ -1,120 +1,100 @@
-# <img src="Assets/rounder.png" width="40" vertical-align="middle" /> Rounder for Windows
+# Rounder for Windows
 
-選択した画面の角を丸く見せるためのトレイユーティリティ。
+Rounder for Windows は、選択したディスプレイの四隅にモダンな切り欠きオーバーレイを描画する、通知領域常駐アプリです。
 
-macOS版をWindowsネイティブAPIで再現しました。通知領域アイコン、クリックスルーの最前面オーバーレイウィンドウ、JSONによる設定保存、マルチモニター選択、プリセット、そしてアニメーション付きの「すーぱーげーみんぐもーど」を搭載しています。バックグラウンドで静かに動作し、システムの通常の動作を妨げません。
+この Windows 版は macOS 版 Rounder v2.1.4 の挙動にできるだけ寄せています。即時適用、モニター選択、プリセット、Rounded / Squircle / Polygon cutout、ログイン時起動、虹色のふち発光つき Super Duper Gaming Mode に対応しています。
 
-<img width="1044" height="732" alt="ScreenShot" src="https://github.com/user-attachments/assets/fd74ce79-cd3b-4534-9c91-334b7b7d4391" />
+![Rounder icon](Assets/rounder.png)
 
 [English README](./README.md)
 
-## プロジェクト構成
+## 機能
 
-```
-Rounder_Windows/
-├── RounderApplicationContext.cs # メインアプリケーションロジックとトレイアイコン
-├── OverlayManager.cs            # オーバーレイウィンドウのライフサイクル管理
-├── CornerOverlayForm.cs         # クリックスルーオーバーレイウィンドウ (GDI+)
-├── WpfSettingsWindow.xaml       # Modern WPFによる設定画面
-├── AppSettings.cs               # アプリ設定のデータモデル
-├── CornerPreset.cs              # コーナープリセットのデータモデル
-├── JsonStore.cs                 # 設定/プリセットのローカルJSON保存
-├── AppTheme.cs                 # テーマ検出と管理
-├── AppAssets.cs                 # アイコン/画像アセット管理
-├── Assets/                      # アプリアイコンと画像
-├── Rounder_Windows.csproj       # .NET プロジェクトファイル
-└── README.md                    # このファイル
-```
+- Windows の通知領域に常駐します。
+- トレイアイコンの左クリックまたはダブルクリックで設定画面を開けます。
+- トレイメニューから角丸効果をオン/オフできます。
+- 設定変更はアプリ再起動なしで即時反映されます。
+- 対象モニターを選択できます。新しく接続したモニターも自動的に対象になります。
+- Rounded、Squircle、Polygon cutout の切り欠き形状を選べます。
+- 半径、色、表示する角、ゲーミング速度、発光強度、Bloom 幅を調整できます。
+- プリセットの保存、編集、インポート、エクスポートに対応しています。
+- Windows の Run レジストリキーを使ったログイン時起動に対応しています。
+- topmost z-order を再主張し、切り欠きウィンドウをタスクバーより上に維持します。
+- PerMonitorV2 DPI aware により、混在スケーリング環境に対応します。
 
-## 特徴
-
-- **バックグラウンド動作**: Windows通知領域（システムトレイ）に常駐
-- **リアルタイム設定**: 角の半径や色を即座に反映
-- **四隅個別制御**: 各角を独立してオン/オフ可能
-- **プリセット機能**: よく使う設定の保存と切り替え
-- **インポート/エクスポート**: JSON形式でのプリセット共有とバックアップ
-- **すーぱーげーみんぐもーど**: アニメーション効果とグロー（光彩）付きの特殊モード
-- **マルチモニター対応**: 角丸を適用するモニターを選択可能
-- **モニター再取得**: 設定画面でモニターリストを手動更新
-- **モダンなインターフェース**: ModernWPFによるFluent Design UI
-- **軽量で安定**: 最小限のCPUおよびメモリ使用量
-
-## システム要件
+## 必要環境
 
 - Windows 10 または Windows 11
-- .NET 8.0 デスクトップランタイム
+- .NET 9.0 Desktop Runtime
+- ソースからビルドする場合は .NET 9.0 SDK
 
-## インストール
-
-### ビルド済みアプリ
-
-1. [Releases](https://github.com/nisesimadao/rounder_windows/releases) から最新版をダウンロード
-2. ZIPファイルを解凍
-3. `Rounder_Windows.exe` を実行
-
-### ソースからビルド
+## ビルド
 
 ```powershell
-# プロジェクトディレクトリから実行
-dotnet build -c Release
+dotnet build .\Rounder_Windows.csproj -c Release
 ```
 
-## 使い方
+## 単一ファイル Release ビルド
 
-### 通常使用
+```powershell
+dotnet publish .\Rounder_Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o .\artifacts\release\Rounder_Windows-win-x64-singlefile
+```
 
-- **システムトレイ**: Rounderアイコンをダブルクリックして設定を開く
-- **設定変更**: 角の半径（0-40px）と色をリアルタイムで調整
-- **四隅個別制御**: 各角を独立してオン/オフ（2x2グリッド配置）
-- **有効/無効**: トレイメニューから角丸効果のオン/オフを切り替え
-- **終了**: トレイメニューからアプリを完全に終了
+出力される実行ファイル:
 
-### プリセット機能
+```text
+artifacts\release\Rounder_Windows-win-x64-singlefile\Rounder_Windows.exe
+```
 
-- **プリセット適用**: 保存された設定をワンクリックで適用
-- **現在の設定を保存**: 現在の設定から新しいプリセットを作成
-- **プリセット編集**: プリセット名の変更や削除
-- **インポート/エクスポート**: JSON形式でプリセットを共有・バックアップ
+## インストーラー作成
 
-## 設定オプション
+[Inno Setup 6](https://jrsoftware.org/isinfo.php) をインストールしてから実行します。
 
-### 一般設定
-- **角の半径**: 0〜40ピクセルで調整可能
-- **角の色**: カラーピッカーまたは標準色から選択
-- **角の表示**: 四隅を個別にオン/オフ
-- **有効化**: 角丸効果のオン/オフ
-- **モニター選択**: 角丸を適用するモニターを選択
-- **モニター再取得**: モニターリストを手動更新
+```powershell
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+  "/DMyAppVersion=2.1.4" `
+  "/DPublishDir=$PWD\artifacts\release\Rounder_Windows-win-x64-singlefile" `
+  ".\installer\Rounder_Windows.iss"
+```
 
-### すーぱーげーみんぐもーど
-- **有効化**: レインボーアニメーションとグロー効果
-- **速度調整**: アニメーション速度を制御
-- **グロー強度**: 光彩効果の強さを調整
+出力されるインストーラー:
 
-## 技術仕様
+```text
+artifacts\installer\Rounder_Windows_Setup.exe
+```
 
-### コア技術
-- **.NET 8 (C#)**: モダンなランタイム
-- **Windows Forms**: トレイアイコンとオーバーレイのホスト
-- **WPF (ModernWPF)**: Fluent Designを採用した設定UI
-- **GDI+**: 高性能なオーバーレイ描画
-- **Win32 API**: 低レベルのウィンドウスタイル操作 (WS_EX_TRANSPARENT 等)
-- **System.Text.Json**: 設定の永続化
+## GitHub Actions リリース
 
-### パフォーマンス
-- **低負荷**: CPU使用率は最小限
-- **メモリ効率**: Windowsネイティブの最適化
-- **リアルタイム反映**: イベント駆動アーキテクチャによる即時適用
+`Build and Release` workflow は、push されたコミットを Windows runner 上でビルドします。
+
+`main` または `master` への push では workflow artifact として成果物を保存します。`v*` タグを push した場合は、対応する GitHub Release を作成または更新し、以下をリリースに添付します。
+
+- `Rounder_Windows.exe`
+- `Rounder_Windows-win-x64-singlefile.zip`
+- `Rounder_Windows_Setup.exe`
+
+```powershell
+git tag v2.1.4
+git push origin v2.1.4
+```
+
+## 実装メモ
+
+- ターゲットフレームワーク: .NET 9, `net9.0-windows`
+- トレイ常駐: Windows Forms `ApplicationContext` と `NotifyIcon`
+- 設定画面: .NET 9公式FluentテーマとDesktop Acrylic backdropを使ったWPF UI。macOS版のサイドバーと連続スクロールに寄せています
+- オーバーレイ描画: クリック透過 topmost layered WinForms ウィンドウと per-pixel alpha
+- ゲーミング発光: 辺ごとの透明な layered window による虹色グラデーション
+- ログイン時起動: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+- 設定保存: `%AppData%\Rounder` 配下の JSON
 
 ## トラブルシューティング
 
-### よくある問題
+**角丸が表示されない**  
+Rounder が有効になっているか、対象ディスプレイが選択されているか確認してください。
 
-**Q: 角丸が表示されない**  
-A: 設定またはトレイメニューでアプリが有効になっているか確認してください。正しいモニターが選択されているか確認してください。
+**システム UI の上に表示されない**  
+Rounder は topmost z-order を再主張しますが、セキュアデスクトップ、ロック画面、一部の排他フルスクリーンアプリは通常アプリより上に表示されることがあります。
 
-**Q: 一部のウィンドウの上に表示されない**  
-A: 排他的フルスクリーンゲーム、セキュアデスクトップ（UAC）、ロック画面などはオーバーレイより上に表示される場合があります。
-
-**Q: 高DPIスケーリング**  
-A: アプリはPerMonitorV2 DPI Awareであり、異なるスケーリングのモニター間でも正しく表示されます。
+**ビルド時に `Rounder_Windows.exe` がロックされる**  
+トレイメニューからアプリを終了するか、`Rounder_Windows` プロセスを停止してから再ビルドしてください。

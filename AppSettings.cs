@@ -15,6 +15,9 @@ public sealed class AppSettings
     public bool SuperGamingMode { get; set; }
     public decimal GamingSpeed { get; set; } = 1.0m;
     public decimal GlowIntensity { get; set; } = 1.0m;
+    public decimal BloomWidth { get; set; } = 1.0m;
+    public CornerCutoutStyle CornerCutoutStyle { get; set; } = CornerCutoutStyle.Rounded;
+    public bool LaunchAtLogin { get; set; }
     public List<string> SelectedDisplays { get; set; } = [];
 
     public Color CornerColor
@@ -38,6 +41,9 @@ public sealed class AppSettings
             SuperGamingMode = SuperGamingMode,
             GamingSpeed = GamingSpeed,
             GlowIntensity = GlowIntensity,
+            BloomWidth = BloomWidth,
+            CornerCutoutStyle = CornerCutoutStyle,
+            LaunchAtLogin = LaunchAtLogin,
             SelectedDisplays = [.. SelectedDisplays]
         };
     }

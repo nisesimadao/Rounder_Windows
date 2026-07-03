@@ -1,92 +1,98 @@
-# <img src="Assets/rounder.png" width="40" vertical-align="middle" /> Rounder for Windows
+# Rounder for Windows
 
-A tray utility to make the corners of your selected screen look rounded.
+Rounder for Windows is a tray utility that draws modern rounded-corner cutouts on selected displays.
 
-This is a recreation of the macOS version using native Windows APIs. It features a notification area icon, a click-through topmost overlay window, JSON-based settings storage, multi-monitor selection, presets, and a "Super Gaming Mode" with animations. It runs quietly in the background and does not interfere with the system's normal operation.
+This Windows port tracks the macOS Rounder v2.1.4 feature set where the platform allows it: immediate overlay updates, selectable monitors, presets, rounded/squircle/polygon cutouts, login startup, and the Super Duper Gaming Mode with animated rainbow edge glow.
 
-<img width="1044" height="732" alt="ScreenShot" src="https://github.com/user-attachments/assets/fd74ce79-cd3b-4534-9c91-334b7b7d4391" />
+![Rounder icon](Assets/rounder.png)
 
-[日本語版 README](./README_jp.md)
-
-## Project Structure
-
-```
-Rounder_Windows/
-├── RounderApplicationContext.cs # Main application logic and tray icon
-├── OverlayManager.cs            # Overlay window lifecycle management
-├── CornerOverlayForm.cs         # Click-through overlay window (GDI+)
-├── WpfSettingsWindow.xaml       # Settings window using Modern WPF
-├── AppSettings.cs               # Data model for app settings
-├── CornerPreset.cs              # Data model for corner presets
-├── JsonStore.cs                 # Local JSON storage for settings/presets
-├── AppTheme.cs                 # Theme detection and management
-├── AppAssets.cs                 # Icon/image asset management
-├── Assets/                      # App icons and images
-├── Rounder_Windows.csproj       # .NET project file
-└── README.md                    # This file
-```
+[Japanese README](./README_jp.md)
 
 ## Features
 
-- Background operation: Stays in the Windows notification area (system tray)
-- Real-time settings: Instant application of corner radius and color
-- Individual corner control: Each corner can be toggled on/off independently
-- Preset functionality: Save and switch between frequently used settings
-- Import/Export: Share and back up presets in JSON format
-- Super Gaming Mode: Special mode with animation effects and glow
-- Multi-monitor support: Choose which monitor to apply the rounded corners to
-- Refresh monitors: Manually update the monitor list in the settings window
-- Modern interface: Fluent Design UI via ModernWPF
-- Lightweight and stable: Minimal CPU and memory usage
+- Runs quietly from the Windows notification area.
+- Left-click or double-click the tray icon to open settings.
+- Toggle the rounded-corner effect from the tray menu.
+- Apply changes immediately without restarting the app.
+- Select target monitors. Newly connected monitors are covered automatically.
+- Choose rounded, squircle, or polygon cutout shapes.
+- Adjust radius, color, visible corners, gaming speed, glow intensity, and bloom width.
+- Save, edit, import, and export presets.
+- Launch at login using the current user's Windows Run registry key.
+- Keeps overlay windows above the taskbar by reasserting topmost z-order.
+- Per-monitor DPI aware for mixed-scale environments.
 
-## System Requirements
+## Requirements
 
 - Windows 10 or Windows 11
-- .NET 8.0 Desktop Runtime
+- .NET 9.0 Desktop Runtime
+- .NET 9.0 SDK if building from source
 
-## Installation
-
-### Pre-built App
-
-1. Download the latest version from [Releases](https://github.com/nisesimadao/rounder_windows/releases)
-2. Extract the ZIP file
-3. Run `Rounder_Windows.exe`
-
-### Build from Source
+## Build
 
 ```powershell
-# Run from the project directory
-dotnet build -c Release
+dotnet build .\Rounder_Windows.csproj -c Release
 ```
 
-## Usage
+## Single-file Release Build
 
-### General Usage
+```powershell
+dotnet publish .\Rounder_Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o .\artifacts\release\Rounder_Windows-win-x64-singlefile
+```
 
-- System tray: Double-click the Rounder icon to open settings
-- Change settings: Adjust corner radius (0-40px) and color in real time
-- Individual corner control: Toggle each corner on/off independently (2x2 grid layout)
-- Enable/Disable: Toggle the rounded corner effect from the tray menu
-- Exit: Completely close the app from the tray menu
+The release executable is:
 
-### Preset Functionality
+```text
+artifacts\release\Rounder_Windows-win-x64-singlefile\Rounder_Windows.exe
+```
 
-- Apply preset: Apply saved settings with a single click
-- Save current settings: Create a new preset from the current configuration
-- Edit preset: Rename or delete presets
-- Import/Export: Share and back up presets in JSON format
+## Installer Build
 
-## Settings Options
+Install [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run:
 
-### General Settings
-- Corner radius: Adjustable from 0 to 40 pixels
-- Corner color: Select from the color picker or standard colors
-- Corner display: Toggle four corners individually
-- Enable: Toggle rounded corner effects
-- Monitor selection: Choose the monitor to apply rounded corners
-- Refresh monitors: Manually update the monitor list
+```powershell
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+  "/DMyAppVersion=2.1.4" `
+  "/DPublishDir=$PWD\artifacts\release\Rounder_Windows-win-x64-singlefile" `
+  ".\installer\Rounder_Windows.iss"
+```
 
-### Super Gaming Mode
-- Enable: Rainbow animation and glow effects
-- Speed control: Control the animation speed
-- Glow intensity: Adjust the strength
+The installer is:
+
+```text
+artifacts\installer\Rounder_Windows_Setup.exe
+```
+
+## GitHub Actions Release
+
+The `Build and Release` workflow builds the pushed commit on Windows. Pushes to `main` or `master` upload workflow artifacts. Pushing a `v*` tag also creates or updates the matching GitHub Release and uploads:
+
+- `Rounder_Windows.exe`
+- `Rounder_Windows-win-x64-singlefile.zip`
+- `Rounder_Windows_Setup.exe`
+
+```powershell
+git tag v2.1.4
+git push origin v2.1.4
+```
+
+## Implementation Notes
+
+- Target framework: .NET 9, `net9.0-windows`
+- Tray/app lifetime: Windows Forms `ApplicationContext` and `NotifyIcon`
+- Settings UI: WPF with the official .NET 9 Fluent theme, Desktop Acrylic backdrop, and a macOS-style sidebar with continuous settings scroll
+- Overlay drawing: click-through topmost layered WinForms windows with per-pixel alpha
+- Gaming glow: separate transparent edge-band layered windows with animated rainbow gradients
+- Startup: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+- Settings storage: JSON under `%AppData%\Rounder`
+
+## Troubleshooting
+
+**The corners are not visible.**  
+Check that Rounder is enabled and that the target display is selected.
+
+**The overlay is hidden behind system UI.**  
+Rounder reasserts topmost z-order, but secure desktops, lock screen, and exclusive fullscreen apps can still appear above normal app windows.
+
+**The build fails because `Rounder_Windows.exe` is locked.**  
+Exit the running app from the tray menu, or stop the `Rounder_Windows` process, then build again.

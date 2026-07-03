@@ -15,6 +15,8 @@ public sealed class CornerPreset
     public bool SuperGamingMode { get; set; }
     public decimal GamingSpeed { get; set; } = 1.0m;
     public decimal GlowIntensity { get; set; } = 1.0m;
+    public decimal BloomWidth { get; set; } = 1.0m;
+    public CornerCutoutStyle CornerCutoutStyle { get; set; } = CornerCutoutStyle.Rounded;
 
     public Color CornerColor
     {
@@ -35,7 +37,9 @@ public sealed class CornerPreset
             CornerColorArgb = settings.CornerColorArgb,
             SuperGamingMode = settings.SuperGamingMode,
             GamingSpeed = settings.GamingSpeed,
-            GlowIntensity = settings.GlowIntensity
+            GlowIntensity = settings.GlowIntensity,
+            BloomWidth = settings.BloomWidth,
+            CornerCutoutStyle = settings.CornerCutoutStyle
         };
     }
 
@@ -50,11 +54,13 @@ public sealed class CornerPreset
         settings.SuperGamingMode = SuperGamingMode;
         settings.GamingSpeed = GamingSpeed;
         settings.GlowIntensity = GlowIntensity;
+        settings.BloomWidth = BloomWidth;
+        settings.CornerCutoutStyle = CornerCutoutStyle;
     }
 
     public override string ToString()
     {
         var mode = SuperGamingMode ? ", gaming" : "";
-        return $"{Name} ({CornerRadius}px{mode})";
+        return $"{Name} ({CornerRadius}px, {CornerCutoutStyle}{mode})";
     }
 }

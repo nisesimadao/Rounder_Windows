@@ -5,6 +5,7 @@ namespace Rounder.Windows;
 public sealed class OverlayManager : IDisposable
 {
     private readonly List<CornerOverlayForm> overlays = [];
+    private readonly List<GamingGlowForm> glowOverlays = [];
     private AppSettings settings;
 
     public OverlayManager(AppSettings settings)
@@ -36,6 +37,10 @@ public sealed class OverlayManager : IDisposable
         foreach (var screen in Screen.AllScreens.Where(screen => selected.Contains(screen.DeviceName)))
         {
             AddScreenOverlays(screen.Bounds);
+            if (settings.SuperGamingMode)
+            {
+                AddGlowOverlays(screen.Bounds);
+            }
         }
     }
 
@@ -44,23 +49,31 @@ public sealed class OverlayManager : IDisposable
         var radius = Math.Clamp(settings.CornerRadius, 0, 200);
         if (settings.TopLeftEnabled)
         {
-            overlays.Add(new CornerOverlayForm(CornerKind.TopLeft, bounds, radius, settings));
+            overlays.Add(new CornerOverlayForm(CornerKind.TopLeft, bounds, radius, 0.0, settings));
         }
 
         if (settings.TopRightEnabled)
         {
-            overlays.Add(new CornerOverlayForm(CornerKind.TopRight, bounds, radius, settings));
+            overlays.Add(new CornerOverlayForm(CornerKind.TopRight, bounds, radius, 0.25, settings));
         }
 
         if (settings.BottomLeftEnabled)
         {
-            overlays.Add(new CornerOverlayForm(CornerKind.BottomLeft, bounds, radius, settings));
+            overlays.Add(new CornerOverlayForm(CornerKind.BottomLeft, bounds, radius, 0.75, settings));
         }
 
         if (settings.BottomRightEnabled)
         {
-            overlays.Add(new CornerOverlayForm(CornerKind.BottomRight, bounds, radius, settings));
+            overlays.Add(new CornerOverlayForm(CornerKind.BottomRight, bounds, radius, 0.5, settings));
         }
+    }
+
+    private void AddGlowOverlays(Rectangle bounds)
+    {
+        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Top, settings));
+        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Right, settings));
+        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Bottom, settings));
+        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Left, settings));
     }
 
     private void HandleDisplaySettingsChanged(object? sender, EventArgs e)
@@ -78,6 +91,14 @@ public sealed class OverlayManager : IDisposable
         }
 
         overlays.Clear();
+
+        foreach (var overlay in glowOverlays)
+        {
+            overlay.Close();
+            overlay.Dispose();
+        }
+
+        glowOverlays.Clear();
     }
 
     public void Dispose()

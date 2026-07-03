@@ -6,6 +6,7 @@ public sealed class PresetEditorForm : Form
     private readonly AppTheme theme = AppTheme.Current();
     private readonly TextBox nameBox = new() { Dock = DockStyle.Fill };
     private readonly NumericUpDown radiusInput = new() { Minimum = 0, Maximum = 40, Width = 76 };
+    private readonly ComboBox cutoutStyleBox = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 160 };
     private readonly Panel colorPreview = new() { Width = 42, Height = 28, BorderStyle = BorderStyle.FixedSingle, Tag = "color-preview" };
     private readonly CheckBox topLeftBox = new() { Text = "Top left", AutoSize = true };
     private readonly CheckBox topRightBox = new() { Text = "Top right", AutoSize = true };
@@ -14,6 +15,7 @@ public sealed class PresetEditorForm : Form
     private readonly CheckBox gamingBox = new() { Text = "Super Duper Gaming Mode", AutoSize = true };
     private readonly NumericUpDown speedInput = new() { Minimum = 1, Maximum = 50, DecimalPlaces = 1, Increment = 1, Width = 76 };
     private readonly NumericUpDown glowInput = new() { Minimum = 1, Maximum = 30, DecimalPlaces = 1, Increment = 1, Width = 76 };
+    private readonly NumericUpDown bloomInput = new() { Minimum = 1, Maximum = 30, DecimalPlaces = 1, Increment = 1, Width = 76 };
 
     public PresetEditorForm(CornerPreset preset)
     {
@@ -27,8 +29,8 @@ public sealed class PresetEditorForm : Form
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false;
         MaximizeBox = false;
-        MinimumSize = new Size(520, 420);
-        ClientSize = new Size(560, 430);
+        MinimumSize = new Size(520, 500);
+        ClientSize = new Size(560, 520);
 
         LoadPreset();
 
@@ -51,6 +53,14 @@ public sealed class PresetEditorForm : Form
     {
         nameBox.Text = preset.Name;
         radiusInput.Value = Math.Clamp(preset.CornerRadius, 0, 40);
+        cutoutStyleBox.Items.Clear();
+        cutoutStyleBox.Items.AddRange(["Rounded", "Squircle", "Polygon cutout"]);
+        cutoutStyleBox.SelectedIndex = preset.CornerCutoutStyle switch
+        {
+            CornerCutoutStyle.Squircle => 1,
+            CornerCutoutStyle.Polygon => 2,
+            _ => 0
+        };
         colorPreview.BackColor = preset.CornerColor;
         topLeftBox.Checked = preset.TopLeftEnabled;
         topRightBox.Checked = preset.TopRightEnabled;
@@ -59,6 +69,7 @@ public sealed class PresetEditorForm : Form
         gamingBox.Checked = preset.SuperGamingMode;
         speedInput.Value = Math.Clamp(preset.GamingSpeed * 10m, 1m, 50m);
         glowInput.Value = Math.Clamp(preset.GlowIntensity * 10m, 1m, 30m);
+        bloomInput.Value = Math.Clamp(preset.BloomWidth * 10m, 1m, 30m);
     }
 
     private Control CreateBody()
@@ -67,7 +78,7 @@ public sealed class PresetEditorForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 7,
+            RowCount = 9,
             Padding = new Padding(20)
         };
         body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
@@ -89,14 +100,18 @@ public sealed class PresetEditorForm : Form
         body.Controls.Add(Row(radiusInput, new Label { Text = "px", AutoSize = true }), 1, 1);
         body.Controls.Add(FieldLabel("Color"), 0, 2);
         body.Controls.Add(Row(colorPreview, chooseColor), 1, 2);
-        body.Controls.Add(FieldLabel("Corners"), 0, 3);
-        body.Controls.Add(CreateCornerGrid(), 1, 3);
-        body.Controls.Add(FieldLabel("Mode"), 0, 4);
-        body.Controls.Add(gamingBox, 1, 4);
-        body.Controls.Add(FieldLabel("Speed"), 0, 5);
-        body.Controls.Add(Row(speedInput, new Label { Text = "x", AutoSize = true }), 1, 5);
-        body.Controls.Add(FieldLabel("Glow"), 0, 6);
-        body.Controls.Add(Row(glowInput, new Label { Text = "x", AutoSize = true }), 1, 6);
+        body.Controls.Add(FieldLabel("Shape"), 0, 3);
+        body.Controls.Add(cutoutStyleBox, 1, 3);
+        body.Controls.Add(FieldLabel("Corners"), 0, 4);
+        body.Controls.Add(CreateCornerGrid(), 1, 4);
+        body.Controls.Add(FieldLabel("Mode"), 0, 5);
+        body.Controls.Add(gamingBox, 1, 5);
+        body.Controls.Add(FieldLabel("Speed"), 0, 6);
+        body.Controls.Add(Row(speedInput, new Label { Text = "x", AutoSize = true }), 1, 6);
+        body.Controls.Add(FieldLabel("Glow"), 0, 7);
+        body.Controls.Add(Row(glowInput, new Label { Text = "x", AutoSize = true }), 1, 7);
+        body.Controls.Add(FieldLabel("Bloom"), 0, 8);
+        body.Controls.Add(Row(bloomInput, new Label { Text = "x", AutoSize = true }), 1, 8);
 
         return body;
     }
@@ -141,6 +156,12 @@ public sealed class PresetEditorForm : Form
 
         preset.Name = nameBox.Text.Trim();
         preset.CornerRadius = (int)radiusInput.Value;
+        preset.CornerCutoutStyle = cutoutStyleBox.SelectedIndex switch
+        {
+            1 => CornerCutoutStyle.Squircle,
+            2 => CornerCutoutStyle.Polygon,
+            _ => CornerCutoutStyle.Rounded
+        };
         preset.CornerColor = colorPreview.BackColor;
         preset.TopLeftEnabled = topLeftBox.Checked;
         preset.TopRightEnabled = topRightBox.Checked;
@@ -149,6 +170,7 @@ public sealed class PresetEditorForm : Form
         preset.SuperGamingMode = gamingBox.Checked;
         preset.GamingSpeed = speedInput.Value / 10m;
         preset.GlowIntensity = glowInput.Value / 10m;
+        preset.BloomWidth = bloomInput.Value / 10m;
     }
 
     private static Label FieldLabel(string text)

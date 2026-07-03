@@ -1,22 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
     <ApplicationIcon>Assets\rounder.ico</ApplicationIcon>
     <Company>Nisesimadao</Company>
     <Authors>Nisesimadao</Authors>
     <Product>Rounder for Windows</Product>
     <AssemblyTitle>Rounder for Windows</AssemblyTitle>
     <FileDescription>Rounder for Windows</FileDescription>
+    <Version>2.1.4</Version>
+    <AssemblyVersion>2.1.4.0</AssemblyVersion>
+    <FileVersion>2.1.4.0</FileVersion>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="iNKORE.UI.WPF.Modern" Version="0.10.0" />
-  </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\rounder.ico" />
     <Resource Include="Assets\rounder.png" />

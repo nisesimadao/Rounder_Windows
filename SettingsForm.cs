@@ -259,7 +259,7 @@ public sealed class SettingsForm : Form
 Rounder for Windows
 
 Original macOS app by Nisesimadao.
-Windows port built with .NET 8, WinForms, GDI+, and small Win32 window-style bridges.
+Windows port built with .NET 9, WinForms, GDI+, and small Win32 window-style bridges.
 
 Settings are stored in %AppData%\Rounder.
 Current settings folder:

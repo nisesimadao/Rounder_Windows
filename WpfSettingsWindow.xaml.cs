@@ -1,11 +1,10 @@
 using System.Globalization;
 using System.Diagnostics;
-using Microsoft.Win32;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Media;
-using iNKORE.UI.WPF.Modern;
-using iNKORE.UI.WPF.Modern.Controls;
 using MediaColor = System.Windows.Media.Color;
 using WpfCheckBox = System.Windows.Controls.CheckBox;
 
@@ -15,25 +14,36 @@ public partial class WpfSettingsWindow : Window
 {
     private readonly AppSettings settings;
     private readonly List<CornerPreset> presets;
+    private readonly Dictionary<string, FrameworkElement> sections;
     private MediaColor selectedColor;
+    private bool selectingFromSidebar;
+    private bool selectingFromScroll;
 
     public WpfSettingsWindow(AppSettings settings, List<CornerPreset> presets)
     {
         this.settings = settings;
         this.presets = presets;
-        WpfThemeBootstrap.EnsureApplication();
-        WpfThemeBootstrap.ApplySystemTheme();
         InitializeComponent();
-        
-        // Ensure the window specifically requests the correct theme
-        var isDark = AppTheme.Current().IsDark;
-        ThemeManager.SetRequestedTheme(this, isDark ? ElementTheme.Dark : ElementTheme.Light);
+        SourceInitialized += (_, _) =>
+        {
+            WpfWindowEffects.ApplyAcrylic(this);
+            KeepWindowInsideWorkingArea();
+        };
+        sections = new Dictionary<string, FrameworkElement>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["General"] = GeneralSection,
+            ["Appearance"] = AppearanceSection,
+            ["Corners"] = CornersSection,
+            ["Displays"] = DisplaysSection,
+            ["Gaming"] = GamingSection,
+            ["Presets"] = PresetsSection,
+            ["Permissions"] = PermissionsSection,
+            ["About"] = AboutSection
+        };
         
         LoadSettings();
         RefreshPresetList();
-        Navigation.SelectedItem = Navigation.MenuItems.OfType<NavigationViewItem>().FirstOrDefault();
-        ShowPage("Settings");
-        SystemEvents.UserPreferenceChanged += HandleUserPreferenceChanged;
+        SidebarList.SelectedIndex = 0;
     }
 
     public event EventHandler<AppSettings>? SettingsApplied;
@@ -42,11 +52,18 @@ public partial class WpfSettingsWindow : Window
     private void LoadSettings()
     {
         EnabledBox.IsChecked = settings.IsEnabled;
+        LaunchAtLoginBox.IsChecked = settings.LaunchAtLogin;
         RadiusText.Text = settings.CornerRadius.ToString(CultureInfo.InvariantCulture);
         RadiusSlider.Value = settings.CornerRadius;
         RadiusSlider.ValueChanged += (_, _) => RadiusText.Text = ((int)RadiusSlider.Value).ToString(CultureInfo.InvariantCulture);
         selectedColor = ToMediaColor(settings.CornerColor);
         ColorPreview.Background = new SolidColorBrush(selectedColor);
+        CutoutStyleBox.SelectedIndex = settings.CornerCutoutStyle switch
+        {
+            CornerCutoutStyle.Squircle => 1,
+            CornerCutoutStyle.Polygon => 2,
+            _ => 0
+        };
         TopLeftBox.IsChecked = settings.TopLeftEnabled;
         TopRightBox.IsChecked = settings.TopRightEnabled;
         BottomLeftBox.IsChecked = settings.BottomLeftEnabled;
@@ -54,6 +71,7 @@ public partial class WpfSettingsWindow : Window
         GamingBox.IsChecked = settings.SuperGamingMode;
         SpeedText.Text = settings.GamingSpeed.ToString(CultureInfo.InvariantCulture);
         GlowText.Text = settings.GlowIntensity.ToString(CultureInfo.InvariantCulture);
+        BloomText.Text = settings.BloomWidth.ToString(CultureInfo.InvariantCulture);
         LoadDisplays();
     }
 
@@ -80,8 +98,15 @@ public partial class WpfSettingsWindow : Window
     private void Apply()
     {
         settings.IsEnabled = EnabledBox.IsChecked == true;
+        settings.LaunchAtLogin = LaunchAtLoginBox.IsChecked == true;
         settings.CornerRadius = ParseInt(RadiusText.Text, 20, 0, 40);
         settings.CornerColor = ToDrawingColor(selectedColor);
+        settings.CornerCutoutStyle = CutoutStyleBox.SelectedIndex switch
+        {
+            1 => CornerCutoutStyle.Squircle,
+            2 => CornerCutoutStyle.Polygon,
+            _ => CornerCutoutStyle.Rounded
+        };
         settings.TopLeftEnabled = TopLeftBox.IsChecked == true;
         settings.TopRightEnabled = TopRightBox.IsChecked == true;
         settings.BottomLeftEnabled = BottomLeftBox.IsChecked == true;
@@ -89,6 +114,7 @@ public partial class WpfSettingsWindow : Window
         settings.SuperGamingMode = GamingBox.IsChecked == true;
         settings.GamingSpeed = ParseDecimal(SpeedText.Text, 1.0m, 0.1m, 5.0m);
         settings.GlowIntensity = ParseDecimal(GlowText.Text, 1.0m, 0.1m, 3.0m);
+        settings.BloomWidth = ParseDecimal(BloomText.Text, 1.0m, 0.1m, 3.0m);
         settings.SelectedDisplays = DisplayList.Items.OfType<WpfCheckBox>()
             .Where(item => item.IsChecked == true)
             .Select(item => item.Tag?.ToString())
@@ -117,20 +143,51 @@ public partial class WpfSettingsWindow : Window
         UpdatePresetDetails();
     }
 
-    private void Navigation_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    private void SidebarList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (args.SelectedItem is NavigationViewItem item && item.Tag is string page)
+        if (selectingFromScroll)
         {
-            ShowPage(page);
+            return;
         }
+
+        if (SidebarList.SelectedItem is not ListBoxItem { Tag: string tag } || !sections.TryGetValue(tag, out var section))
+        {
+            return;
+        }
+
+        selectingFromSidebar = true;
+        section.BringIntoView();
+        selectingFromSidebar = false;
     }
 
-    private void ShowPage(string page)
+    private void DetailScroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
     {
-        SettingsPage.Visibility = page == "Settings" ? Visibility.Visible : Visibility.Collapsed;
-        PresetsPage.Visibility = page == "Presets" ? Visibility.Visible : Visibility.Collapsed;
-        PermissionsPage.Visibility = page == "Permissions" ? Visibility.Visible : Visibility.Collapsed;
-        CreditsPage.Visibility = page == "Credits" ? Visibility.Visible : Visibility.Collapsed;
+        if (selectingFromSidebar)
+        {
+            return;
+        }
+
+        var current = sections
+            .Select(pair => new
+            {
+                pair.Key,
+                Offset = Math.Abs(pair.Value.TransformToAncestor(SectionsPanel).Transform(new System.Windows.Point(0, 0)).Y - DetailScroll.VerticalOffset)
+            })
+            .OrderBy(item => item.Offset)
+            .FirstOrDefault();
+
+        if (current is null)
+        {
+            return;
+        }
+
+        var item = SidebarList.Items.OfType<ListBoxItem>().FirstOrDefault(candidate => string.Equals(candidate.Tag as string, current.Key, StringComparison.OrdinalIgnoreCase));
+        if (item is not null && !ReferenceEquals(SidebarList.SelectedItem, item))
+        {
+            selectingFromScroll = true;
+            SidebarList.SelectedItem = item;
+            selectingFromScroll = false;
+        }
     }
 
     private CornerPreset? SelectedPreset()
@@ -146,7 +203,7 @@ public partial class WpfSettingsWindow : Window
             return;
         }
 
-        PresetDetails.Text = $"{preset.Name}: {preset.CornerRadius}px, {System.Drawing.ColorTranslator.ToHtml(preset.CornerColor)}";
+        PresetDetails.Text = $"{preset.Name}: {preset.CornerRadius}px, {preset.CornerCutoutStyle}, {System.Drawing.ColorTranslator.ToHtml(preset.CornerColor)}";
     }
 
     private void RefreshMonitors_Click(object sender, RoutedEventArgs e) => LoadDisplays();
@@ -252,6 +309,12 @@ public partial class WpfSettingsWindow : Window
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
     private void Apply_Click(object sender, RoutedEventArgs e) => Apply();
+    private void Exit_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+        System.Windows.Forms.Application.Exit();
+    }
+
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
         Apply();
@@ -263,29 +326,37 @@ public partial class WpfSettingsWindow : Window
         Process.Start(new ProcessStartInfo("https://github.com/nisesimadao/rounder_windows") { UseShellExecute = true });
     }
 
-    protected override void OnClosed(EventArgs e)
+    private void KeepWindowInsideWorkingArea()
     {
-        SystemEvents.UserPreferenceChanged -= HandleUserPreferenceChanged;
-        base.OnClosed(e);
-    }
+        var handle = new WindowInteropHelper(this).Handle;
+        var screen = Screen.PrimaryScreen ?? Screen.FromHandle(handle);
+        var source = PresentationSource.FromVisual(this);
+        var transform = source?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+        var topLeft = transform.Transform(new System.Windows.Point(screen.WorkingArea.Left, screen.WorkingArea.Top));
+        var bottomRight = transform.Transform(new System.Windows.Point(screen.WorkingArea.Right, screen.WorkingArea.Bottom));
+        var workingWidth = bottomRight.X - topLeft.X;
+        var workingHeight = bottomRight.Y - topLeft.Y;
+        var width = Math.Min(Width, Math.Max(MinWidth, workingWidth - 32));
+        var height = Math.Min(Height, Math.Max(MinHeight, workingHeight - 32));
 
-    private void HandleUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
-    {
-        if (e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color)
-        {
-            Dispatcher.Invoke(() => {
-                WpfThemeBootstrap.ApplySystemTheme();
-                var isDark = AppTheme.Current().IsDark;
-                ThemeManager.SetRequestedTheme(this, isDark ? ElementTheme.Dark : ElementTheme.Light);
-            });
-        }
+        Width = width;
+        Height = height;
+        Left = topLeft.X + Math.Max(16, (workingWidth - width) / 2);
+        Top = topLeft.Y + Math.Max(16, (workingHeight - height) / 2);
     }
 
     private void ApplyControlsToSettingsOnly()
     {
         settings.IsEnabled = EnabledBox.IsChecked == true;
+        settings.LaunchAtLogin = LaunchAtLoginBox.IsChecked == true;
         settings.CornerRadius = ParseInt(RadiusText.Text, 20, 0, 40);
         settings.CornerColor = ToDrawingColor(selectedColor);
+        settings.CornerCutoutStyle = CutoutStyleBox.SelectedIndex switch
+        {
+            1 => CornerCutoutStyle.Squircle,
+            2 => CornerCutoutStyle.Polygon,
+            _ => CornerCutoutStyle.Rounded
+        };
         settings.TopLeftEnabled = TopLeftBox.IsChecked == true;
         settings.TopRightEnabled = TopRightBox.IsChecked == true;
         settings.BottomLeftEnabled = BottomLeftBox.IsChecked == true;
@@ -293,6 +364,7 @@ public partial class WpfSettingsWindow : Window
         settings.SuperGamingMode = GamingBox.IsChecked == true;
         settings.GamingSpeed = ParseDecimal(SpeedText.Text, 1.0m, 0.1m, 5.0m);
         settings.GlowIntensity = ParseDecimal(GlowText.Text, 1.0m, 0.1m, 3.0m);
+        settings.BloomWidth = ParseDecimal(BloomText.Text, 1.0m, 0.1m, 3.0m);
     }
 
     private void SetColor(MediaColor color)
@@ -325,4 +397,45 @@ public partial class WpfSettingsWindow : Window
         return System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
     }
 
+}
+
+internal static class WpfWindowEffects
+{
+    private const int DwmwaUseImmersiveDarkMode = 20;
+    private const int DwmwaWindowCornerPreference = 33;
+    private const int DwmwaSystemBackdropType = 38;
+    private const int DwmwcpRound = 2;
+    private const int DwmSystemBackdropDesktopAcrylic = 3;
+
+    public static void ApplyAcrylic(Window window)
+    {
+        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))
+        {
+            return;
+        }
+
+        if (PresentationSource.FromVisual(window) is HwndSource source)
+        {
+            source.CompositionTarget.BackgroundColor = Colors.Transparent;
+        }
+
+        var handle = new WindowInteropHelper(window).Handle;
+        var dark = 1;
+        _ = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref dark, sizeof(int));
+
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+        {
+            var rounded = DwmwcpRound;
+            _ = DwmSetWindowAttribute(handle, DwmwaWindowCornerPreference, ref rounded, sizeof(int));
+        }
+
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
+        {
+            var backdrop = DwmSystemBackdropDesktopAcrylic;
+            _ = DwmSetWindowAttribute(handle, DwmwaSystemBackdropType, ref backdrop, sizeof(int));
+        }
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int pvAttribute, int cbAttribute);
 }

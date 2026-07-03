@@ -15,6 +15,7 @@ public sealed class RounderApplicationContext : ApplicationContext
     public RounderApplicationContext()
     {
         settings = JsonStore.LoadSettings();
+        settings.LaunchAtLogin = StartupManager.IsEnabled();
         EnsureDisplayDefaults();
         presets = JsonStore.LoadPresets();
         restartTimer = new System.Windows.Forms.Timer { Interval = 2000 };
@@ -39,13 +40,17 @@ public sealed class RounderApplicationContext : ApplicationContext
             }
         };
 
-        if (!settings.HasLaunchedBefore)
+        var shouldShowSettings = !settings.HasLaunchedBefore;
+        if (shouldShowSettings)
         {
             settings.HasLaunchedBefore = true;
             JsonStore.SaveSettings(settings);
         }
 
-        ShowSettings();
+        if (shouldShowSettings)
+        {
+            ShowSettings();
+        }
     }
 
     private void ScheduleRestartAfterDisplayChange()
@@ -103,6 +108,7 @@ public sealed class RounderApplicationContext : ApplicationContext
         settingsWindow.SettingsApplied += (_, updatedSettings) =>
         {
             settings = updatedSettings.Clone();
+            settings.LaunchAtLogin = StartupManager.SetEnabled(settings.LaunchAtLogin);
             EnsureDisplayDefaults();
             JsonStore.SaveSettings(settings);
             JsonStore.SavePresets(presets);
@@ -132,14 +138,19 @@ public sealed class RounderApplicationContext : ApplicationContext
             return;
         }
 
-        settings.SelectedDisplays = settings.SelectedDisplays
+        var previouslySelected = settings.SelectedDisplays
             .Where(currentDisplays.Contains)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        if (settings.SelectedDisplays.Count == 0)
+        if (previouslySelected.Count == 0)
         {
             settings.SelectedDisplays = [.. currentDisplays];
+        }
+        else
+        {
+            // v2.1.4 behavior: new displays are covered automatically.
+            settings.SelectedDisplays = [.. previouslySelected.Concat(currentDisplays.Except(previouslySelected, StringComparer.OrdinalIgnoreCase))];
         }
 
         JsonStore.SaveSettings(settings);

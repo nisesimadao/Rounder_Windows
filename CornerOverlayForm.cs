@@ -1,5 +1,4 @@
 using System.Drawing.Drawing2D;
-using System.Runtime.InteropServices;
 
 namespace Rounder.Windows;
 
@@ -11,50 +10,32 @@ public enum CornerKind
     BottomRight
 }
 
-public sealed class CornerOverlayForm : Form
+public sealed class CornerOverlayForm : LayeredWindow
 {
-    private const int WsExTransparent = 0x00000020;
-    private const int WsExToolWindow = 0x00000080;
-    private const int WsExNoActivate = 0x08000000;
-    private const int HwndTopmost = -1;
-    private const uint SwpNoSize = 0x0001;
-    private const uint SwpNoMove = 0x0002;
-    private const uint SwpNoActivate = 0x0010;
-    private const uint SwpShowWindow = 0x0040;
-    private const uint SwpNoOwnerZOrder = 0x0200;
-    private const uint SwpNoSendChanging = 0x0400;
-
-    private static readonly Color TransparentKeyColor = Color.FromArgb(255, 1, 2, 3);
     private readonly CornerKind corner;
     private readonly int radius;
-    private readonly int padding;
+    private readonly int visualSize;
+    private readonly double baseHue;
     private readonly AppSettings settings;
     private readonly System.Windows.Forms.Timer animationTimer;
     private readonly System.Windows.Forms.Timer zOrderTimer;
     private double hue;
 
-    public CornerOverlayForm(CornerKind corner, Rectangle screenBounds, int radius, AppSettings settings)
+    public CornerOverlayForm(CornerKind corner, Rectangle screenBounds, int radius, double baseHue, AppSettings settings)
     {
         this.corner = corner;
         this.radius = radius;
+        this.baseHue = baseHue;
         this.settings = settings;
-        padding = settings.SuperGamingMode ? 80 : 1;
+        visualSize = CalculateVisualSize(radius, settings.CornerCutoutStyle);
 
-        AutoScaleMode = AutoScaleMode.None;
-        BackColor = TransparentKeyColor;
-        TransparencyKey = TransparentKeyColor;
-        FormBorderStyle = FormBorderStyle.None;
-        ShowInTaskbar = false;
-        StartPosition = FormStartPosition.Manual;
-        TopMost = true;
         Bounds = CalculateBounds(screenBounds);
-        DoubleBuffered = true;
 
         animationTimer = new System.Windows.Forms.Timer { Interval = 16 };
         animationTimer.Tick += (_, _) =>
         {
             hue = (hue + 0.004 * (double)Math.Max(0.1m, settings.GamingSpeed)) % 1.0;
-            Invalidate();
+            RenderLayer();
         };
         zOrderTimer = new System.Windows.Forms.Timer { Interval = 1000 };
         zOrderTimer.Tick += (_, _) => KeepAboveTaskbar();
@@ -65,42 +46,45 @@ public sealed class CornerOverlayForm : Form
         }
 
         Show();
+        RenderLayer();
         KeepAboveTaskbar();
         zOrderTimer.Start();
     }
 
-    protected override bool ShowWithoutActivation => true;
-
-    protected override CreateParams CreateParams
+    protected override void DrawLayer(Graphics graphics, Rectangle bounds)
     {
-        get
-        {
-            var cp = base.CreateParams;
-            cp.ExStyle |= WsExTransparent | WsExToolWindow | WsExNoActivate;
-            return cp;
-        }
-    }
-
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        base.OnPaint(e);
-
-        e.Graphics.Clear(TransparentKeyColor);
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-        var content = new Rectangle(padding, padding, radius, radius);
-        var overlayColor = settings.SuperGamingMode ? ColorFromHsv(hue * 360.0, 0.9, 0.95) : settings.CornerColor;
-
-        if (settings.SuperGamingMode)
-        {
-            DrawGlow(e.Graphics, content, overlayColor);
-        }
+        var content = new Rectangle(0, 0, bounds.Width, bounds.Height);
+        var overlayColor = settings.SuperGamingMode ? ColorFromHsv(((baseHue + hue) % 1.0) * 360.0, 1.0, 1.0) : settings.CornerColor;
 
         using var fill = new SolidBrush(overlayColor);
-        e.Graphics.FillRectangle(fill, content);
-
-        using var transparentBrush = new SolidBrush(TransparentKeyColor);
-        e.Graphics.FillEllipse(transparentBrush, CircleBounds(content));
+        graphics.CompositingMode = CompositingMode.SourceOver;
+        switch (settings.CornerCutoutStyle)
+        {
+            case CornerCutoutStyle.Polygon:
+                using (var polygon = PolygonMaskPath(content))
+                {
+                    graphics.FillPath(fill, polygon);
+                }
+                break;
+            case CornerCutoutStyle.Squircle:
+                graphics.FillRectangle(fill, content);
+                using (var squircle = SquircleCutoutPath(content))
+                {
+                    graphics.CompositingMode = CompositingMode.SourceCopy;
+                    using var clear = new SolidBrush(Color.Transparent);
+                    graphics.FillPath(clear, squircle);
+                }
+                break;
+            default:
+                graphics.FillRectangle(fill, content);
+                using (var rounded = RoundedCutoutPath(content))
+                {
+                    graphics.CompositingMode = CompositingMode.SourceCopy;
+                    using var clear = new SolidBrush(Color.Transparent);
+                    graphics.FillPath(clear, rounded);
+                }
+                break;
+        }
     }
 
     protected override void Dispose(bool disposing)
@@ -116,71 +100,113 @@ public sealed class CornerOverlayForm : Form
         base.Dispose(disposing);
     }
 
-    private void KeepAboveTaskbar()
-    {
-        if (!IsHandleCreated || IsDisposed)
-        {
-            return;
-        }
-
-        SetWindowPos(
-            Handle,
-            HwndTopmost,
-            0,
-            0,
-            0,
-            0,
-            SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow | SwpNoOwnerZOrder | SwpNoSendChanging);
-    }
-
     private Rectangle CalculateBounds(Rectangle screen)
     {
-        var size = radius + padding * 2;
+        var size = Math.Max(1, visualSize);
         var x = corner switch
         {
-            CornerKind.TopLeft or CornerKind.BottomLeft => screen.Left - padding,
-            _ => screen.Right - radius - padding
+            CornerKind.TopLeft or CornerKind.BottomLeft => screen.Left,
+            _ => screen.Right - size
         };
         var y = corner switch
         {
-            CornerKind.TopLeft or CornerKind.TopRight => screen.Top - padding,
-            _ => screen.Bottom - radius - padding
+            CornerKind.TopLeft or CornerKind.TopRight => screen.Top,
+            _ => screen.Bottom - size
         };
 
         return new Rectangle(x, y, size, size);
     }
 
-    private Rectangle CircleBounds(Rectangle content)
+    private static int CalculateVisualSize(int radius, CornerCutoutStyle style)
     {
-        var center = corner switch
-        {
-            CornerKind.TopLeft => new Point(content.Right, content.Bottom),
-            CornerKind.TopRight => new Point(content.Left, content.Bottom),
-            CornerKind.BottomLeft => new Point(content.Right, content.Top),
-            _ => new Point(content.Left, content.Top)
-        };
-
-        return new Rectangle(center.X - radius, center.Y - radius, radius * 2, radius * 2);
+        var factor = style == CornerCutoutStyle.Squircle ? 1.8 : 1.0;
+        return Math.Max(1, (int)Math.Round(radius * factor));
     }
 
-    private void DrawGlow(Graphics graphics, Rectangle content, Color color)
+    private GraphicsPath RoundedCutoutPath(Rectangle content)
     {
-        var glow = (float)Math.Clamp(settings.GlowIntensity, 0.1m, 3.0m);
-        var center = corner switch
+        var path = new GraphicsPath();
+        var diameter = radius * 2;
+        var bounds = corner switch
         {
-            CornerKind.TopLeft => new Point(content.Left, content.Top),
-            CornerKind.TopRight => new Point(content.Right, content.Top),
-            CornerKind.BottomLeft => new Point(content.Left, content.Bottom),
-            _ => new Point(content.Right, content.Bottom)
+            CornerKind.TopLeft => new Rectangle(content.Right - radius, content.Bottom - radius, diameter, diameter),
+            CornerKind.TopRight => new Rectangle(content.Left - radius, content.Bottom - radius, diameter, diameter),
+            CornerKind.BottomLeft => new Rectangle(content.Right - radius, content.Top - radius, diameter, diameter),
+            _ => new Rectangle(content.Left - radius, content.Top - radius, diameter, diameter)
         };
 
-        for (var i = 5; i >= 1; i--)
+        path.AddEllipse(bounds);
+        return path;
+    }
+
+    private GraphicsPath SquircleCutoutPath(Rectangle content)
+    {
+        var path = new GraphicsPath();
+        var points = new List<PointF>();
+        const double n = 4.0;
+        const int steps = 72;
+
+        var center = corner switch
         {
-            var alpha = Math.Clamp((int)(20 * glow / i), 5, 90);
-            var diameter = (int)(radius * (1.3 + i * 0.55));
-            using var brush = new SolidBrush(Color.FromArgb(alpha, color));
-            graphics.FillEllipse(brush, center.X - diameter / 2, center.Y - diameter / 2, diameter, diameter);
+            CornerKind.TopLeft => new PointF(content.Right, content.Bottom),
+            CornerKind.TopRight => new PointF(content.Left, content.Bottom),
+            CornerKind.BottomLeft => new PointF(content.Right, content.Top),
+            _ => new PointF(content.Left, content.Top)
+        };
+        var sx = corner is CornerKind.TopLeft or CornerKind.BottomLeft ? -1f : 1f;
+        var sy = corner is CornerKind.TopLeft or CornerKind.TopRight ? -1f : 1f;
+        points.Add(center);
+
+        for (var i = 0; i <= steps; i++)
+        {
+            var theta = i / (double)steps * Math.PI / 2.0;
+            var x = content.Width * Math.Pow(Math.Cos(theta), 2.0 / n);
+            var y = content.Height * Math.Pow(Math.Sin(theta), 2.0 / n);
+            points.Add(new PointF(center.X + sx * (float)x, center.Y + sy * (float)y));
         }
+
+        path.AddPolygon(points.ToArray());
+        return path;
+    }
+
+    private GraphicsPath PolygonMaskPath(Rectangle content)
+    {
+        var path = new GraphicsPath();
+        var inset = Math.Min(radius, Math.Min(content.Width, content.Height));
+        if (inset <= 0)
+        {
+            return path;
+        }
+
+        var points = corner switch
+        {
+            CornerKind.TopLeft => new[]
+            {
+                new Point(content.Left, content.Top),
+                new Point(content.Left + inset, content.Top),
+                new Point(content.Left, content.Top + inset)
+            },
+            CornerKind.TopRight => new[]
+            {
+                new Point(content.Right, content.Top),
+                new Point(content.Right - inset, content.Top),
+                new Point(content.Right, content.Top + inset)
+            },
+            CornerKind.BottomLeft => new[]
+            {
+                new Point(content.Left, content.Bottom),
+                new Point(content.Left + inset, content.Bottom),
+                new Point(content.Left, content.Bottom - inset)
+            },
+            _ => new[]
+            {
+                new Point(content.Right, content.Bottom),
+                new Point(content.Right - inset, content.Bottom),
+                new Point(content.Right, content.Bottom - inset)
+            }
+        };
+        path.AddPolygon(points);
+        return path;
     }
 
     private static Color ColorFromHsv(double hue, double saturation, double value)
@@ -203,14 +229,4 @@ public sealed class CornerOverlayForm : Form
             _ => Color.FromArgb(255, v, p, q)
         };
     }
-
-    [DllImport("user32.dll")]
-    private static extern bool SetWindowPos(
-        IntPtr hWnd,
-        int hWndInsertAfter,
-        int x,
-        int y,
-        int cx,
-        int cy,
-        uint uFlags);
 }
