@@ -18,6 +18,7 @@ public partial class WpfSettingsWindow : Window
     private MediaColor selectedColor;
     private bool selectingFromSidebar;
     private bool selectingFromScroll;
+    private string? currentSectionKey;
 
     public WpfSettingsWindow(AppSettings settings, List<CornerPreset> presets)
     {
@@ -44,6 +45,7 @@ public partial class WpfSettingsWindow : Window
         LoadSettings();
         RefreshPresetList();
         SidebarList.SelectedIndex = 0;
+        currentSectionKey = "General";
     }
 
     public event EventHandler<AppSettings>? SettingsApplied;
@@ -152,11 +154,13 @@ public partial class WpfSettingsWindow : Window
 
         if (SidebarList.SelectedItem is not ListBoxItem { Tag: string tag } || !sections.TryGetValue(tag, out var section))
         {
+            RestoreCurrentSidebarSelection();
             return;
         }
 
         selectingFromSidebar = true;
-        section.BringIntoView();
+        currentSectionKey = tag;
+        ScrollSectionIntoView(section);
         selectingFromSidebar = false;
     }
 
@@ -167,27 +171,85 @@ public partial class WpfSettingsWindow : Window
             return;
         }
 
-        var current = sections
-            .Select(pair => new
-            {
-                pair.Key,
-                Offset = Math.Abs(pair.Value.TransformToAncestor(SectionsPanel).Transform(new System.Windows.Point(0, 0)).Y - DetailScroll.VerticalOffset)
-            })
-            .OrderBy(item => item.Offset)
-            .FirstOrDefault();
+        var current = FindCurrentVisibleSection();
 
         if (current is null)
         {
             return;
         }
 
-        var item = SidebarList.Items.OfType<ListBoxItem>().FirstOrDefault(candidate => string.Equals(candidate.Tag as string, current.Key, StringComparison.OrdinalIgnoreCase));
+        if (string.Equals(currentSectionKey, current, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var item = FindSidebarItem(current);
         if (item is not null && !ReferenceEquals(SidebarList.SelectedItem, item))
         {
             selectingFromScroll = true;
+            currentSectionKey = current;
             SidebarList.SelectedItem = item;
+            item.BringIntoView();
             selectingFromScroll = false;
         }
+    }
+
+    private void ScrollSectionIntoView(FrameworkElement section)
+    {
+        if (!section.IsVisible)
+        {
+            return;
+        }
+
+        var position = section.TransformToAncestor(SectionsPanel).Transform(new System.Windows.Point(0, 0));
+        var targetOffset = Math.Clamp(position.Y, 0, DetailScroll.ScrollableHeight);
+        DetailScroll.ScrollToVerticalOffset(targetOffset);
+    }
+
+    private string? FindCurrentVisibleSection()
+    {
+        if (sections.Count == 0)
+        {
+            return null;
+        }
+
+        var activationLine = DetailScroll.VerticalOffset + 72;
+        var visible = sections
+            .Select(pair => new
+            {
+                pair.Key,
+                Top = pair.Value.TransformToAncestor(SectionsPanel).Transform(new System.Windows.Point(0, 0)).Y
+            })
+            .Where(item => item.Top <= activationLine)
+            .OrderByDescending(item => item.Top)
+            .FirstOrDefault();
+
+        return visible?.Key ?? sections.First().Key;
+    }
+
+    private ListBoxItem? FindSidebarItem(string tag)
+    {
+        return SidebarList.Items
+            .OfType<ListBoxItem>()
+            .FirstOrDefault(candidate => string.Equals(candidate.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void RestoreCurrentSidebarSelection()
+    {
+        if (currentSectionKey is null)
+        {
+            return;
+        }
+
+        var item = FindSidebarItem(currentSectionKey);
+        if (item is null || ReferenceEquals(SidebarList.SelectedItem, item))
+        {
+            return;
+        }
+
+        selectingFromScroll = true;
+        SidebarList.SelectedItem = item;
+        selectingFromScroll = false;
     }
 
     private CornerPreset? SelectedPreset()
