@@ -24,6 +24,8 @@
             <SolidColorBrush x:Key="RounderSecondaryTextBrush" Color="#B8B8B8"/>
             <SolidColorBrush x:Key="RounderHoverBrush" Color="#3A3A3A"/>
             <SolidColorBrush x:Key="RounderPressedBrush" Color="#454545"/>
+            <SolidColorBrush x:Key="RounderNavSelectedBrush" Color="#334C9EFF"/>
+            <SolidColorBrush x:Key="RounderNavSelectedBorderBrush" Color="#6CAEFF"/>
 
         <Style TargetType="TextBox">
             <Setter Property="Height" Value="30"/>
@@ -165,30 +167,81 @@
         <Style TargetType="ListBoxItem" x:Key="SidebarItemStyle">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,0,0,3"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="MinHeight" Value="38"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource RounderTextBrush}"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Root"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="7"
-                                Padding="8,6">
-                            <ContentPresenter/>
-                        </Border>
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="SelectionRail"
+                                    Width="3"
+                                    Height="18"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    CornerRadius="2"
+                                    Background="{DynamicResource RounderNavSelectedBorderBrush}"
+                                    Opacity="0"/>
+                            <Border x:Name="Root"
+                                    Margin="7,0,0,0"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="7"
+                                    Padding="10,0">
+                                <ContentPresenter HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="{DynamicResource RounderHoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource {x:Static SystemColors.AccentColorBrushKey}}"/>
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource RounderNavSelectedBrush}"/>
+                                <Setter TargetName="SelectionRail" Property="Opacity" Value="1"/>
                                 <Setter Property="Foreground" Value="{DynamicResource RounderTextBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style TargetType="ListBoxItem" x:Key="SidebarDividerStyle">
+            <Setter Property="IsHitTestVisible" Value="False"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Height="22" Margin="10,7,10,5">
+                            <Border Height="1"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource RounderBorderBrush}"
+                                    Opacity="0.45"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="SidebarGlyphStyle">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="SidebarTextStyle">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
         </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -203,13 +256,15 @@
         <Border Background="{DynamicResource RounderSidebarBrush}"
                 BorderBrush="{DynamicResource RounderBorderBrush}"
                 BorderThickness="0,0,1,0">
-            <DockPanel Margin="10,28,10,10">
-                <Grid DockPanel.Dock="Top" Margin="8,0,4,16">
+            <DockPanel Margin="12,26,12,12">
+                <Grid DockPanel.Dock="Top" Margin="8,0,4,18">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Image Width="30" Height="30" Source="pack://application:,,,/Assets/rounder.png" Margin="0,0,10,0"/>
+                    <Border Width="34" Height="34" CornerRadius="8" Background="#26000000" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1" Margin="0,0,10,0">
+                        <Image Width="24" Height="24" Source="pack://application:,,,/Assets/rounder.png"/>
+                    </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="Rounder" FontSize="14" FontWeight="SemiBold"/>
                         <TextBlock Text="Version 2.1.4" FontSize="11" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
@@ -221,57 +276,89 @@
                          Background="Transparent"
                          BorderThickness="0"
                          ItemContainerStyle="{StaticResource SidebarItemStyle}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
                          SelectionChanged="SidebarList_SelectionChanged">
                     <ListBoxItem Tag="General">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="General"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE713;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="General" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Appearance">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE790;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="Appearance"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE790;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Appearance" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Corners">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE7A3;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="Corners"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE9F5;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Corners" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Displays">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="Displays"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7F4;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Displays" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Gaming">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="Gaming"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE7FC;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Gaming" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
-                    <ListBoxItem IsHitTestVisible="False" Focusable="False">
-                        <Separator Margin="0,5"/>
-                    </ListBoxItem>
+                    <ListBoxItem Style="{StaticResource SidebarDividerStyle}"/>
                     <ListBoxItem Tag="Presets">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="Presets"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE734;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Presets" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Permissions">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xEA18;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="Permissions"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xEA18;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Permissions" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="About">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Width="22"/>
-                            <TextBlock Text="About"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE946;" Style="{StaticResource SidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="About" Style="{StaticResource SidebarTextStyle}"/>
+                        </Grid>
                     </ListBoxItem>
                 </ListBox>
             </DockPanel>
