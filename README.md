@@ -52,7 +52,7 @@ Install [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run:
 
 ```powershell
 & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
-  "/DMyAppVersion=2.1.4" `
+  "/DMyAppVersion=2.1.5" `
   "/DPublishDir=$PWD\artifacts\release\Rounder_Windows-win-x64-singlefile" `
   ".\installer\Rounder_Windows.iss"
 ```
@@ -65,15 +65,17 @@ artifacts\installer\Rounder_Windows_Setup.exe
 
 ## GitHub Actions Release
 
-The `Build and Release` workflow builds the pushed commit on Windows. Pushes to `main` or `master` upload workflow artifacts. Pushing a `v*` tag also creates or updates the matching GitHub Release and uploads:
+The `Build and Release` workflow builds the pushed commit on Windows. Pushes to `main` or `master` upload workflow artifacts, and automatically publish a `v<Version>` GitHub Release (with auto-generated notes) the first time the `.csproj` `<Version>` lands without a matching release — bump the version and push to release. Each release includes:
 
 - `Rounder_Windows.exe`
 - `Rounder_Windows-win-x64-singlefile.zip`
 - `Rounder_Windows_Setup.exe`
 
+Pushing a `v*` tag manually (or dispatching the workflow with a tag name) triggers the same release flow:
+
 ```powershell
-git tag v2.1.4
-git push origin v2.1.4
+git tag v2.1.5
+git push origin v2.1.5
 ```
 
 ## Implementation Notes

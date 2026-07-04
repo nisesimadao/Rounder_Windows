@@ -45,6 +45,8 @@ jobs:
       - name: Resolve version
         id: version
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           [xml]$project = Get-Content $env:PROJECT_PATH
           $projectVersion = $project.Project.PropertyGroup.Version | Select-Object -First 1
@@ -55,6 +57,17 @@ jobs:
           $releaseTag = "${{ github.event.inputs.release_tag }}"
           if (-not $releaseTag -and "${{ github.ref_type }}" -eq "tag") {
             $releaseTag = "${{ github.ref_name }}"
+          }
+
+          # Auto-release: on branch pushes, publish v<Version> automatically
+          # the first time that project version lands on the default branch.
+          if (-not $releaseTag -and "${{ github.event_name }}" -eq "push" -and "${{ github.ref_type }}" -eq "branch") {
+            $candidate = "v$projectVersion"
+            gh release view $candidate *> $null
+            if ($LASTEXITCODE -ne 0) {
+              $releaseTag = $candidate
+            }
+            $global:LASTEXITCODE = 0
           }
 
           "project_version=$projectVersion" >> $env:GITHUB_OUTPUT
@@ -120,7 +133,7 @@ jobs:
             gh release create $env:RELEASE_TAG `
               --target "${{ github.sha }}" `
               --title "Rounder for Windows $env:RELEASE_TAG" `
-              --notes "Automated Windows release for Rounder $env:PROJECT_VERSION."
+              --generate-notes
           }
 
           gh release upload $env:RELEASE_TAG `

@@ -19,7 +19,6 @@ public sealed class CornerOverlayForm : LayeredWindow
     private readonly AppSettings settings;
     private readonly System.Windows.Forms.Timer animationTimer;
     private readonly System.Windows.Forms.Timer zOrderTimer;
-    private double hue;
 
     public CornerOverlayForm(CornerKind corner, Rectangle screenBounds, int radius, double baseHue, AppSettings settings)
     {
@@ -32,11 +31,7 @@ public sealed class CornerOverlayForm : LayeredWindow
         SetLayerBounds(CalculateBounds(screenBounds));
 
         animationTimer = new System.Windows.Forms.Timer { Interval = 16 };
-        animationTimer.Tick += (_, _) =>
-        {
-            hue = (hue + 0.004 * (double)Math.Max(0.1m, settings.GamingSpeed)) % 1.0;
-            RenderLayer();
-        };
+        animationTimer.Tick += (_, _) => RenderLayer();
         zOrderTimer = new System.Windows.Forms.Timer { Interval = 1000 };
         zOrderTimer.Tick += (_, _) => KeepAboveTaskbar();
 
@@ -51,10 +46,17 @@ public sealed class CornerOverlayForm : LayeredWindow
         zOrderTimer.Start();
     }
 
-    protected override void DrawLayer(Graphics graphics, Rectangle bounds)
+    protected override void DrawLayer(Bitmap surface)
     {
-        var content = new Rectangle(0, 0, bounds.Width, bounds.Height);
-        var overlayColor = settings.SuperGamingMode ? ColorFromHsv(((baseHue + hue) % 1.0) * 360.0, 1.0, 1.0) : settings.CornerColor;
+        using var graphics = Graphics.FromImage(surface);
+        graphics.Clear(Color.Transparent);
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        graphics.PixelOffsetMode = PixelOffsetMode.Half;
+
+        var content = new Rectangle(0, 0, surface.Width, surface.Height);
+        var overlayColor = settings.SuperGamingMode
+            ? GamingVisuals.ColorFromHue(baseHue + GamingVisuals.Phase(settings.GamingSpeed))
+            : settings.CornerColor;
 
         using var fill = new SolidBrush(overlayColor);
         graphics.CompositingMode = CompositingMode.SourceOver;
@@ -207,26 +209,5 @@ public sealed class CornerOverlayForm : LayeredWindow
         };
         path.AddPolygon(points);
         return path;
-    }
-
-    private static Color ColorFromHsv(double hue, double saturation, double value)
-    {
-        var hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
-        var f = hue / 60 - Math.Floor(hue / 60);
-        value *= 255;
-        var v = Convert.ToInt32(value);
-        var p = Convert.ToInt32(value * (1 - saturation));
-        var q = Convert.ToInt32(value * (1 - f * saturation));
-        var t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
-
-        return hi switch
-        {
-            0 => Color.FromArgb(255, v, t, p),
-            1 => Color.FromArgb(255, q, v, p),
-            2 => Color.FromArgb(255, p, v, t),
-            3 => Color.FromArgb(255, p, q, v),
-            4 => Color.FromArgb(255, t, p, v),
-            _ => Color.FromArgb(255, v, p, q)
-        };
     }
 }
