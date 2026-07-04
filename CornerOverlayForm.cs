@@ -29,7 +29,7 @@ public sealed class CornerOverlayForm : LayeredWindow
         this.settings = settings;
         visualSize = CalculateVisualSize(radius, settings.CornerCutoutStyle);
 
-        Bounds = CalculateBounds(screenBounds);
+        SetLayerBounds(CalculateBounds(screenBounds));
 
         animationTimer = new System.Windows.Forms.Timer { Interval = 16 };
         animationTimer.Tick += (_, _) =>

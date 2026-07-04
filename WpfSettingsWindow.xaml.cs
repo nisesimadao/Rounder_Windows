@@ -80,13 +80,14 @@ public partial class WpfSettingsWindow : Window
     private void LoadDisplays()
     {
         DisplayList.Items.Clear();
+        var monitors = DisplayMonitor.GetAll();
         var selected = settings.SelectedDisplays.Count == 0
-            ? Screen.AllScreens.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ? monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
             : settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var screen in Screen.AllScreens)
+        foreach (var screen in monitors)
         {
-            var label = $"{screen.DeviceName}  {screen.Bounds.Width}x{screen.Bounds.Height}" + (screen.Primary ? "  Primary" : "");
+            var label = $"{screen.DeviceName}  {screen.Bounds.Width}x{screen.Bounds.Height}" + (screen.IsPrimary ? "  Primary" : "");
             DisplayList.Items.Add(new WpfCheckBox
             {
                 Content = label,

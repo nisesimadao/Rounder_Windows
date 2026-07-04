@@ -130,7 +130,7 @@ public sealed class RounderApplicationContext : ApplicationContext
 
     private void EnsureDisplayDefaults()
     {
-        var currentDisplays = Screen.AllScreens.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var currentDisplays = DisplayMonitor.GetAll().Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         if (settings.SelectedDisplays.Count == 0)
         {
             settings.SelectedDisplays = [.. currentDisplays];

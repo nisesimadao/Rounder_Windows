@@ -23,7 +23,7 @@ public sealed class GamingGlowForm : LayeredWindow
         this.edge = edge;
         this.settings = settings;
 
-        Bounds = CalculateBounds(screenBounds);
+        SetLayerBounds(CalculateBounds(screenBounds));
 
         animationTimer = new System.Windows.Forms.Timer { Interval = 16 };
         animationTimer.Tick += (_, _) =>
@@ -93,12 +93,12 @@ public sealed class GamingGlowForm : LayeredWindow
     {
         if (edge is ScreenEdge.Top or ScreenEdge.Bottom)
         {
-            var y = edge == ScreenEdge.Top ? depth : Height - depth - 1;
-            return new Rectangle((int)Math.Round(Width * t0), y, Math.Max(1, (int)Math.Round(Width * (t1 - t0)) + 1), 1);
+            var y = edge == ScreenEdge.Top ? depth : LayerHeight - depth - 1;
+            return new Rectangle((int)Math.Round(LayerWidth * t0), y, Math.Max(1, (int)Math.Round(LayerWidth * (t1 - t0)) + 1), 1);
         }
 
-        var x = edge == ScreenEdge.Left ? depth : Width - depth - 1;
-        return new Rectangle(x, (int)Math.Round(Height * t0), 1, Math.Max(1, (int)Math.Round(Height * (t1 - t0)) + 1));
+        var x = edge == ScreenEdge.Left ? depth : LayerWidth - depth - 1;
+        return new Rectangle(x, (int)Math.Round(LayerHeight * t0), 1, Math.Max(1, (int)Math.Round(LayerHeight * (t1 - t0)) + 1));
     }
 
     private LinearGradientMode GradientMode()

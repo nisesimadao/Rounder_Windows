@@ -19,6 +19,7 @@ public abstract class LayeredWindow : Form
     private const uint SwpShowWindow = 0x0040;
     private const uint SwpNoOwnerZOrder = 0x0200;
     private const uint SwpNoSendChanging = 0x0400;
+    private Rectangle layerBounds;
 
     protected LayeredWindow()
     {
@@ -31,6 +32,10 @@ public abstract class LayeredWindow : Form
 
     protected override bool ShowWithoutActivation => true;
 
+    protected int LayerWidth => layerBounds.Width;
+
+    protected int LayerHeight => layerBounds.Height;
+
     protected override CreateParams CreateParams
     {
         get
@@ -41,20 +46,33 @@ public abstract class LayeredWindow : Form
         }
     }
 
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        ApplyNativeBounds();
+    }
+
+    protected void SetLayerBounds(Rectangle bounds)
+    {
+        layerBounds = bounds;
+        Bounds = bounds;
+        ApplyNativeBounds();
+    }
+
     protected void RenderLayer()
     {
-        if (!IsHandleCreated || IsDisposed || Width <= 0 || Height <= 0)
+        if (!IsHandleCreated || IsDisposed || layerBounds.Width <= 0 || layerBounds.Height <= 0)
         {
             return;
         }
 
-        using var bitmap = new Bitmap(Width, Height, PixelFormat.Format32bppPArgb);
+        using var bitmap = new Bitmap(layerBounds.Width, layerBounds.Height, PixelFormat.Format32bppPArgb);
         using (var graphics = Graphics.FromImage(bitmap))
         {
             graphics.Clear(Color.Transparent);
             graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
-            DrawLayer(graphics, new Rectangle(0, 0, Width, Height));
+            DrawLayer(graphics, new Rectangle(0, 0, layerBounds.Width, layerBounds.Height));
         }
 
         var screenDc = GetDC(IntPtr.Zero);
@@ -64,9 +82,9 @@ public abstract class LayeredWindow : Form
 
         try
         {
-            var size = new SizeRef(Width, Height);
+            var size = new SizeRef(layerBounds.Width, layerBounds.Height);
             var source = new PointRef(0, 0);
-            var destination = new PointRef(Left, Top);
+            var destination = new PointRef(layerBounds.Left, layerBounds.Top);
             var blend = new BlendFunction
             {
                 BlendOp = AcSrcOver,
@@ -90,12 +108,17 @@ public abstract class LayeredWindow : Form
 
     protected void KeepAboveTaskbar()
     {
-        if (!IsHandleCreated || IsDisposed)
+        ApplyNativeBounds();
+    }
+
+    private void ApplyNativeBounds()
+    {
+        if (!IsHandleCreated || IsDisposed || layerBounds.Width <= 0 || layerBounds.Height <= 0)
         {
             return;
         }
 
-        SetWindowPos(Handle, HwndTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow | SwpNoOwnerZOrder | SwpNoSendChanging);
+        SetWindowPos(Handle, HwndTopmost, layerBounds.Left, layerBounds.Top, layerBounds.Width, layerBounds.Height, SwpNoActivate | SwpShowWindow | SwpNoOwnerZOrder | SwpNoSendChanging);
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -6,11 +6,13 @@ public sealed class OverlayManager : IDisposable
 {
     private readonly List<CornerOverlayForm> overlays = [];
     private readonly List<GamingGlowForm> glowOverlays = [];
+    private readonly Control invoker = new();
     private AppSettings settings;
 
     public OverlayManager(AppSettings settings)
     {
         this.settings = settings;
+        _ = invoker.Handle;
         SystemEvents.DisplaySettingsChanged += HandleDisplaySettingsChanged;
     }
 
@@ -24,17 +26,24 @@ public sealed class OverlayManager : IDisposable
 
     public void Recreate()
     {
+        if (invoker.IsHandleCreated && invoker.InvokeRequired)
+        {
+            invoker.BeginInvoke((MethodInvoker)Recreate);
+            return;
+        }
+
         Clear();
         if (!settings.IsEnabled || settings.CornerRadius <= 0)
         {
             return;
         }
 
+        var monitors = DisplayMonitor.GetAll();
         var selected = settings.SelectedDisplays.Count == 0
-            ? Screen.AllScreens.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ? monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
             : settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var screen in Screen.AllScreens.Where(screen => selected.Contains(screen.DeviceName)))
+        foreach (var screen in monitors.Where(screen => selected.Contains(screen.DeviceName)))
         {
             AddScreenOverlays(screen.Bounds);
             if (settings.SuperGamingMode)
@@ -105,5 +114,6 @@ public sealed class OverlayManager : IDisposable
     {
         SystemEvents.DisplaySettingsChanged -= HandleDisplaySettingsChanged;
         Clear();
+        invoker.Dispose();
     }
 }

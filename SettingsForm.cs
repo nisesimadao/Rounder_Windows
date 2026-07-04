@@ -378,14 +378,15 @@ Windows notes:
     private void LoadDisplays()
     {
         displayList.Items.Clear();
+        var monitors = DisplayMonitor.GetAll();
         var selected = settings.SelectedDisplays.Count == 0
-            ? Screen.AllScreens.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            ? monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
             : settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var screen in Screen.AllScreens)
+        foreach (var screen in monitors)
         {
             var scale = DeviceDpi > 0 ? $"{DeviceDpi / 96.0:0.##}x" : "system";
-            var label = $"{screen.DeviceName}  {screen.Bounds.Width}x{screen.Bounds.Height}  scale {scale}" + (screen.Primary ? "  Primary" : "");
+            var label = $"{screen.DeviceName}  {screen.Bounds.Width}x{screen.Bounds.Height}  scale {scale}" + (screen.IsPrimary ? "  Primary" : "");
             var item = new DisplayItem(screen.DeviceName, label);
             displayList.Items.Add(item, selected.Contains(screen.DeviceName));
         }
