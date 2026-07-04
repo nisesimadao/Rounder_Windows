@@ -27,7 +27,7 @@ public partial class WpfSettingsWindow : Window
         InitializeComponent();
         SourceInitialized += (_, _) =>
         {
-            WpfWindowEffects.ApplyAcrylic(this);
+            WpfWindowEffects.ApplyMica(this);
             KeepWindowInsideWorkingArea();
         };
         sections = new Dictionary<string, FrameworkElement>(StringComparer.OrdinalIgnoreCase)
@@ -468,9 +468,9 @@ internal static class WpfWindowEffects
     private const int DwmwaWindowCornerPreference = 33;
     private const int DwmwaSystemBackdropType = 38;
     private const int DwmwcpRound = 2;
-    private const int DwmSystemBackdropDesktopAcrylic = 3;
+    private const int DwmSystemBackdropMica = 2;
 
-    public static void ApplyAcrylic(Window window)
+    public static void ApplyMica(Window window)
     {
         if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))
         {
@@ -494,7 +494,7 @@ internal static class WpfWindowEffects
 
         if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
         {
-            var backdrop = DwmSystemBackdropDesktopAcrylic;
+            var backdrop = DwmSystemBackdropMica;
             _ = DwmSetWindowAttribute(handle, DwmwaSystemBackdropType, ref backdrop, sizeof(int));
         }
     }

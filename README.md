@@ -80,7 +80,7 @@ git push origin v2.1.4
 
 - Target framework: .NET 9, `net9.0-windows`
 - Tray/app lifetime: Windows Forms `ApplicationContext` and `NotifyIcon`
-- Settings UI: WPF with the official .NET 9 Fluent theme, Desktop Acrylic backdrop, and a macOS-style sidebar with continuous settings scroll
+- Settings UI: WPF with iNKORE.UI.WPF.Modern Fluent styles, Mica backdrop, and a macOS-style sidebar with continuous settings scroll
 - Overlay drawing: click-through topmost layered WinForms windows with per-pixel alpha
 - Gaming glow: separate transparent edge-band layered windows with animated rainbow gradients
 - Startup: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`

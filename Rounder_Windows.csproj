@@ -23,4 +23,7 @@
     <Resource Include="Assets\rounder.png" />
     <Resource Include="Assets\status.png" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="iNKORE.UI.WPF.Modern" Version="0.10.2.1" />
+  </ItemGroup>
 </Project>

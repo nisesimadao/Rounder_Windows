@@ -82,7 +82,7 @@ git push origin v2.1.4
 
 - ターゲットフレームワーク: .NET 9, `net9.0-windows`
 - トレイ常駐: Windows Forms `ApplicationContext` と `NotifyIcon`
-- 設定画面: .NET 9公式FluentテーマとDesktop Acrylic backdropを使ったWPF UI。macOS版のサイドバーと連続スクロールに寄せています
+- 設定画面: iNKORE.UI.WPF.Modern のFluentスタイルとMica backdropを使ったWPF UI。macOS版のサイドバーと連続スクロールに寄せています
 - オーバーレイ描画: クリック透過 topmost layered WinForms ウィンドウと per-pixel alpha
 - ゲーミング発光: 辺ごとの透明な layered window による虹色グラデーション
 - ログイン時起動: `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`

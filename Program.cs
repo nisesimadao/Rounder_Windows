@@ -1,4 +1,6 @@
 using Rounder.Windows;
+using iNKORE.UI.WPF.Modern;
+using iNKORE.UI.WPF.Modern.Controls;
 
 internal static class Program
 {
@@ -19,10 +21,12 @@ internal static class Program
             return;
         }
 
-        _ = new System.Windows.Application
+        var application = new System.Windows.Application
         {
             ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown,
             ThemeMode = System.Windows.ThemeMode.System
         };
+        application.Resources.MergedDictionaries.Add(new ThemeResources { RequestedTheme = ApplicationTheme.Dark });
+        application.Resources.MergedDictionaries.Add(new XamlControlsResources());
     }
 }
