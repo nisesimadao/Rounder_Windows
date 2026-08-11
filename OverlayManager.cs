@@ -45,17 +45,19 @@ public sealed class OverlayManager : IDisposable
 
         foreach (var screen in monitors.Where(screen => selected.Contains(screen.DeviceName)))
         {
-            AddScreenOverlays(screen.Bounds);
+            AddScreenOverlays(screen);
             if (settings.SuperGamingMode)
             {
-                AddGlowOverlays(screen.Bounds);
+                AddGlowOverlays(screen);
             }
         }
     }
 
-    private void AddScreenOverlays(Rectangle bounds)
+    private void AddScreenOverlays(DisplayMonitor screen)
     {
-        var radius = Math.Clamp(settings.CornerRadius, 0, 200);
+        var bounds = screen.Bounds;
+        // The radius setting is in logical px (macOS points); convert to physical px per monitor.
+        var radius = (int)Math.Round(Math.Clamp(settings.CornerRadius, 0, 200) * Math.Max(0.5, screen.Scale));
         if (settings.TopLeftEnabled)
         {
             overlays.Add(new CornerOverlayForm(CornerKind.TopLeft, bounds, radius, 0.0, settings));
@@ -77,12 +79,12 @@ public sealed class OverlayManager : IDisposable
         }
     }
 
-    private void AddGlowOverlays(Rectangle bounds)
+    private void AddGlowOverlays(DisplayMonitor screen)
     {
-        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Top, settings));
-        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Right, settings));
-        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Bottom, settings));
-        glowOverlays.Add(new GamingGlowForm(bounds, ScreenEdge.Left, settings));
+        glowOverlays.Add(new GamingGlowForm(screen.Bounds, ScreenEdge.Top, screen.Scale, settings));
+        glowOverlays.Add(new GamingGlowForm(screen.Bounds, ScreenEdge.Right, screen.Scale, settings));
+        glowOverlays.Add(new GamingGlowForm(screen.Bounds, ScreenEdge.Bottom, screen.Scale, settings));
+        glowOverlays.Add(new GamingGlowForm(screen.Bounds, ScreenEdge.Left, screen.Scale, settings));
     }
 
     private void HandleDisplaySettingsChanged(object? sender, EventArgs e)

@@ -52,7 +52,7 @@ artifacts\release\Rounder_Windows-win-x64-singlefile\Rounder_Windows.exe
 
 ```powershell
 & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
-  "/DMyAppVersion=2.1.4" `
+  "/DMyAppVersion=2.1.5" `
   "/DPublishDir=$PWD\artifacts\release\Rounder_Windows-win-x64-singlefile" `
   ".\installer\Rounder_Windows.iss"
 ```
@@ -67,15 +67,17 @@ artifacts\installer\Rounder_Windows_Setup.exe
 
 `Build and Release` workflow は、push されたコミットを Windows runner 上でビルドします。
 
-`main` または `master` への push では workflow artifact として成果物を保存します。`v*` タグを push した場合は、対応する GitHub Release を作成または更新し、以下をリリースに添付します。
+`main` または `master` への push では workflow artifact として成果物を保存します。さらに、`.csproj` の `<Version>` に対応する `v<Version>` リリースがまだ存在しない場合は、自動的に GitHub Release を作成し、以下をリリースに添付します（リリースノートは自動生成）。バージョンを上げて push するだけでリリースされます。
 
 - `Rounder_Windows.exe`
 - `Rounder_Windows-win-x64-singlefile.zip`
 - `Rounder_Windows_Setup.exe`
 
+`v*` タグを手動で push した場合や、workflow_dispatch でタグ名を指定した場合も、同じリリース処理が実行されます。
+
 ```powershell
-git tag v2.1.4
-git push origin v2.1.4
+git tag v2.1.5
+git push origin v2.1.5
 ```
 
 ## 実装メモ

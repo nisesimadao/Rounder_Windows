@@ -1,4 +1,5 @@
-using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace Rounder.Windows;
 
@@ -10,27 +11,57 @@ public enum ScreenEdge
     Right
 }
 
+/// <summary>
+/// One rainbow bloom band per screen edge, matching the macOS GamingGlowWindow:
+/// a hue gradient running along the edge (quarter of the hue wheel per edge,
+/// traveling clockwise), masked by a sharp inward falloff whose outermost sliver
+/// is fully opaque. Colors are derived from the shared GamingVisuals clock so the
+/// bands stay in phase with the corner cutouts.
+/// </summary>
 public sealed class GamingGlowForm : LayeredWindow
 {
+    // Inward alpha falloff from the macOS mask gradient: (px, alpha) stops over a
+    // 24 px reference band; stops at <= 1 px stay fully opaque regardless of intensity.
+    private static readonly (double Px, double Alpha)[] FalloffProfile =
+    [
+        (0.0, 1.0),
+        (1.0, 1.0),
+        (2.0, 0.5),
+        (3.0, 0.3),
+        (4.0, 0.25),
+        (6.0, 0.16),
+        (9.0, 0.09),
+        (14.0, 0.04),
+        (24.0, 0.0)
+    ];
+
+    private const double ProfileReferencePx = 24.0;
+
     private readonly ScreenEdge edge;
     private readonly AppSettings settings;
+    private readonly double baseHue;
     private readonly System.Windows.Forms.Timer animationTimer;
     private readonly System.Windows.Forms.Timer zOrderTimer;
-    private double hue;
+    private int[] alphaLut = [];
+    private uint[] colorLut = [];
+    private int[] rowBuffer = [];
 
-    public GamingGlowForm(Rectangle screenBounds, ScreenEdge edge, AppSettings settings)
+    public GamingGlowForm(Rectangle screenBounds, ScreenEdge edge, double scale, AppSettings settings)
     {
         this.edge = edge;
         this.settings = settings;
+        baseHue = edge switch
+        {
+            ScreenEdge.Top => 0.0,
+            ScreenEdge.Right => 0.25,
+            ScreenEdge.Bottom => 0.5,
+            _ => 0.75
+        };
 
-        SetLayerBounds(CalculateBounds(screenBounds));
+        SetLayerBounds(CalculateBounds(screenBounds, scale));
 
         animationTimer = new System.Windows.Forms.Timer { Interval = 16 };
-        animationTimer.Tick += (_, _) =>
-        {
-            hue = (hue + 0.004 * (double)Math.Max(0.1m, settings.GamingSpeed)) % 1.0;
-            RenderLayer();
-        };
+        animationTimer.Tick += (_, _) => RenderLayer();
         zOrderTimer = new System.Windows.Forms.Timer { Interval = 1000 };
         zOrderTimer.Tick += (_, _) => KeepAboveTaskbar();
 
@@ -41,26 +72,67 @@ public sealed class GamingGlowForm : LayeredWindow
         zOrderTimer.Start();
     }
 
-    protected override void DrawLayer(Graphics graphics, Rectangle bounds)
+    protected override void DrawLayer(Bitmap surface)
     {
-        var intensity = Math.Clamp((double)settings.GlowIntensity, 0.1, 3.0);
-        const int colorCount = 12;
-        var reach = edge is ScreenEdge.Top or ScreenEdge.Bottom ? bounds.Height : bounds.Width;
-        for (var depth = 0; depth < reach; depth++)
-        {
-            var alpha = EdgeAlpha(depth, reach, intensity);
-            if (alpha <= 0)
-            {
-                continue;
-            }
+        var width = surface.Width;
+        var height = surface.Height;
+        var horizontal = edge is ScreenEdge.Top or ScreenEdge.Bottom;
+        var length = horizontal ? width : height;
+        var reach = horizontal ? height : width;
 
-            for (var i = 0; i < colorCount; i++)
+        if (alphaLut.Length != reach)
+        {
+            alphaLut = BuildAlphaLut(reach, (double)settings.GlowIntensity);
+        }
+
+        if (colorLut.Length != length)
+        {
+            colorLut = new uint[length];
+        }
+
+        if (rowBuffer.Length != width)
+        {
+            rowBuffer = new int[width];
+        }
+
+        // Hue travels clockwise around the screen perimeter: each edge spans a
+        // quarter of the hue wheel, phase-shifted by the shared clock.
+        var phase = GamingVisuals.Phase(settings.GamingSpeed);
+        for (var i = 0; i < length; i++)
+        {
+            var position = length <= 1 ? 0.0 : i / (double)(length - 1);
+            var along = edge is ScreenEdge.Bottom or ScreenEdge.Left ? 1.0 - position : position;
+            colorLut[i] = GamingVisuals.RgbFromHue(baseHue + phase + along * 0.25);
+        }
+
+        var data = surface.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+        try
+        {
+            for (var y = 0; y < height; y++)
             {
-                var t0 = i / (double)colorCount;
-                var t1 = (i + 1) / (double)colorCount;
-                using var brush = new LinearGradientBrush(Segment(t0, t1, depth), WithAlpha(ColorAt(t0), alpha), WithAlpha(ColorAt(t1), alpha), GradientMode());
-                graphics.FillRectangle(brush, Segment(t0, t1, depth));
+                if (horizontal)
+                {
+                    var alpha = alphaLut[edge == ScreenEdge.Top ? y : height - 1 - y];
+                    for (var x = 0; x < width; x++)
+                    {
+                        rowBuffer[x] = Premultiply(colorLut[x], alpha);
+                    }
+                }
+                else
+                {
+                    var color = colorLut[y];
+                    for (var x = 0; x < width; x++)
+                    {
+                        rowBuffer[x] = Premultiply(color, alphaLut[edge == ScreenEdge.Left ? x : width - 1 - x]);
+                    }
+                }
+
+                Marshal.Copy(rowBuffer, 0, data.Scan0 + y * data.Stride, width);
             }
+        }
+        finally
+        {
+            surface.UnlockBits(data);
         }
     }
 
@@ -77,9 +149,11 @@ public sealed class GamingGlowForm : LayeredWindow
         base.Dispose(disposing);
     }
 
-    private Rectangle CalculateBounds(Rectangle screen)
+    private Rectangle CalculateBounds(Rectangle screen, double scale)
     {
-        var reach = Math.Max(5, (int)Math.Round(24 * Math.Clamp((double)settings.BloomWidth, 0.1, 3.0)));
+        // macOS: band thickness = max(5, 24 * bloomWidth) points -> physical px via scale.
+        var points = Math.Max(5.0, ProfileReferencePx * Math.Clamp((double)settings.BloomWidth, 0.1, 3.0));
+        var reach = Math.Max(1, (int)Math.Round(points * Math.Max(0.5, scale)));
         return edge switch
         {
             ScreenEdge.Top => new Rectangle(screen.Left, screen.Top, screen.Width, reach),
@@ -89,71 +163,61 @@ public sealed class GamingGlowForm : LayeredWindow
         };
     }
 
-    private Rectangle Segment(double t0, double t1, int depth)
+    private static int[] BuildAlphaLut(int reach, double intensity)
     {
-        if (edge is ScreenEdge.Top or ScreenEdge.Bottom)
+        // Intensity scales the inner bloom only; the outermost <= 1 px stays opaque,
+        // and the profile stretches with the band (locations are px/24 of the band).
+        var opacity = Math.Min(1.0, Math.Clamp(intensity, 0.1, 3.0));
+        var stops = new (double Location, double Alpha)[FalloffProfile.Length];
+        for (var i = 0; i < FalloffProfile.Length; i++)
         {
-            var y = edge == ScreenEdge.Top ? depth : LayerHeight - depth - 1;
-            return new Rectangle((int)Math.Round(LayerWidth * t0), y, Math.Max(1, (int)Math.Round(LayerWidth * (t1 - t0)) + 1), 1);
+            var (px, alpha) = FalloffProfile[i];
+            stops[i] = (px / ProfileReferencePx, px <= 1.0 ? 1.0 : alpha * opacity);
         }
 
-        var x = edge == ScreenEdge.Left ? depth : LayerWidth - depth - 1;
-        return new Rectangle(x, (int)Math.Round(LayerHeight * t0), 1, Math.Max(1, (int)Math.Round(LayerHeight * (t1 - t0)) + 1));
-    }
-
-    private LinearGradientMode GradientMode()
-    {
-        return edge is ScreenEdge.Top or ScreenEdge.Bottom ? LinearGradientMode.Horizontal : LinearGradientMode.Vertical;
-    }
-
-    private Color ColorAt(double segment)
-    {
-        var baseHue = edge switch
+        var lut = new int[reach];
+        for (var depth = 0; depth < reach; depth++)
         {
-            ScreenEdge.Top => 0.0,
-            ScreenEdge.Right => 0.25,
-            ScreenEdge.Bottom => 0.5,
-            _ => 0.75
-        };
-        var local = edge is ScreenEdge.Bottom or ScreenEdge.Left ? 1.0 - segment : segment;
-        return ColorFromHsv(((baseHue + hue + local * 0.25) % 1.0) * 360.0, 1.0, 1.0);
-    }
+            var u = (depth + 0.5) / reach;
+            var value = stops[^1].Alpha;
+            if (u <= stops[0].Location)
+            {
+                value = stops[0].Alpha;
+            }
+            else
+            {
+                for (var i = 1; i < stops.Length; i++)
+                {
+                    if (u <= stops[i].Location)
+                    {
+                        var t = (u - stops[i - 1].Location) / (stops[i].Location - stops[i - 1].Location);
+                        value = stops[i - 1].Alpha + (stops[i].Alpha - stops[i - 1].Alpha) * t;
+                        break;
+                    }
+                }
+            }
 
-    private static int EdgeAlpha(int depth, int reach, double intensity)
-    {
-        if (depth <= 1)
-        {
-            return 255;
+            lut[depth] = Math.Clamp((int)Math.Round(value * 255.0), 0, 255);
         }
 
-        var t = depth / Math.Max(1.0, reach - 1.0);
-        var profile = Math.Pow(1.0 - t, 3.2);
-        return Math.Clamp((int)Math.Round(210 * Math.Min(1.0, intensity) * profile), 0, 220);
+        return lut;
     }
 
-    private static Color WithAlpha(Color color, int alpha)
+    private static int Premultiply(uint rgb, int alpha)
     {
-        return Color.FromArgb(alpha, color.R, color.G, color.B);
-    }
-
-    private static Color ColorFromHsv(double hue, double saturation, double value)
-    {
-        var hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
-        var f = hue / 60 - Math.Floor(hue / 60);
-        value *= 255;
-        var v = Convert.ToInt32(value);
-        var p = Convert.ToInt32(value * (1 - saturation));
-        var q = Convert.ToInt32(value * (1 - f * saturation));
-        var t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
-
-        return hi switch
+        if (alpha <= 0)
         {
-            0 => Color.FromArgb(255, v, t, p),
-            1 => Color.FromArgb(255, q, v, p),
-            2 => Color.FromArgb(255, p, v, t),
-            3 => Color.FromArgb(255, p, q, v),
-            4 => Color.FromArgb(255, t, p, q),
-            _ => Color.FromArgb(255, v, p, q)
-        };
+            return 0;
+        }
+
+        if (alpha >= 255)
+        {
+            return unchecked((int)(0xFF000000u | rgb));
+        }
+
+        var r = (int)((rgb >> 16) & 0xFF) * alpha / 255;
+        var g = (int)((rgb >> 8) & 0xFF) * alpha / 255;
+        var b = (int)(rgb & 0xFF) * alpha / 255;
+        return alpha << 24 | r << 16 | g << 8 | b;
     }
 }

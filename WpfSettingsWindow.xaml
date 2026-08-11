@@ -260,7 +260,7 @@
                                         <TextBlock Text="px" Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
                                     </StackPanel>
                                 </Grid>
-                                <Slider x:Name="RadiusSlider" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,10,0,16"/>
+                                <Slider x:Name="RadiusSlider" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="1" LargeChange="1" Margin="0,10,0,16"/>
                                 <Separator Margin="0,0,0,16"/>
                                 <TextBlock Text="Corner shape" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,8"/>
                                 <ComboBox x:Name="CutoutStyleBox" HorizontalAlignment="Stretch" Margin="0,0,0,16">
@@ -316,26 +316,37 @@
                     <StackPanel x:Name="GamingSection" Tag="Gaming" Margin="0,0,0,28">
                         <TextBlock Text="Gaming" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
                         <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="160"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="Mode" Foreground="{DynamicResource RounderSecondaryTextBrush}" VerticalAlignment="Center"/>
-                                <CheckBox x:Name="GamingBox" Grid.Column="1" Content="Enable animated rainbow glow"/>
-                                <TextBlock Grid.Row="1" Text="Speed" Foreground="{DynamicResource RounderSecondaryTextBrush}" VerticalAlignment="Center" Margin="0,12,0,0"/>
-                                <TextBox x:Name="SpeedText" Grid.Row="1" Grid.Column="1" Width="90" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-                                <TextBlock Grid.Row="2" Text="Glow intensity" Foreground="{DynamicResource RounderSecondaryTextBrush}" VerticalAlignment="Center" Margin="0,12,0,0"/>
-                                <TextBox x:Name="GlowText" Grid.Row="2" Grid.Column="1" Width="90" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-                                <TextBlock Grid.Row="3" Text="Bloom width" Foreground="{DynamicResource RounderSecondaryTextBrush}" VerticalAlignment="Center" Margin="0,12,0,0"/>
-                                <TextBox x:Name="BloomText" Grid.Row="3" Grid.Column="1" Width="90" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-                            </Grid>
+                            <StackPanel>
+                                <CheckBox x:Name="GamingBox" Content="Enable animated rainbow glow" Margin="0,0,0,16"/>
+                                <Separator Margin="0,0,0,16"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Speed" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="SpeedValue" Grid.Column="1" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
+                                </Grid>
+                                <Slider x:Name="SpeedSlider" Minimum="0.1" Maximum="5.0" TickFrequency="0.1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="0.1" LargeChange="0.1" Margin="0,10,0,16"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Glow intensity" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="GlowValue" Grid.Column="1" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
+                                </Grid>
+                                <Slider x:Name="GlowSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="0.1" LargeChange="0.1" Margin="0,10,0,16"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Bloom width" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="BloomValue" Grid.Column="1" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
+                                </Grid>
+                                <Slider x:Name="BloomSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="0.1" LargeChange="0.1" Margin="0,10,0,0"/>
+                            </StackPanel>
                         </Border>
                     </StackPanel>
 

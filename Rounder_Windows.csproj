@@ -14,9 +14,9 @@
     <Product>Rounder for Windows</Product>
     <AssemblyTitle>Rounder for Windows</AssemblyTitle>
     <FileDescription>Rounder for Windows</FileDescription>
-    <Version>2.1.4</Version>
-    <AssemblyVersion>2.1.4.0</AssemblyVersion>
-    <FileVersion>2.1.4.0</FileVersion>
+    <Version>2.1.5</Version>
+    <AssemblyVersion>2.1.5.0</AssemblyVersion>
+    <FileVersion>2.1.5.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Assets\rounder.ico" />

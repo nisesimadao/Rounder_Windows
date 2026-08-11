@@ -20,6 +20,7 @@ public abstract class LayeredWindow : Form
     private const uint SwpNoOwnerZOrder = 0x0200;
     private const uint SwpNoSendChanging = 0x0400;
     private Rectangle layerBounds;
+    private Bitmap? surface;
 
     protected LayeredWindow()
     {
@@ -66,18 +67,17 @@ public abstract class LayeredWindow : Form
             return;
         }
 
-        using var bitmap = new Bitmap(layerBounds.Width, layerBounds.Height, PixelFormat.Format32bppPArgb);
-        using (var graphics = Graphics.FromImage(bitmap))
+        if (surface is null || surface.Width != layerBounds.Width || surface.Height != layerBounds.Height)
         {
-            graphics.Clear(Color.Transparent);
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
-            DrawLayer(graphics, new Rectangle(0, 0, layerBounds.Width, layerBounds.Height));
+            surface?.Dispose();
+            surface = new Bitmap(layerBounds.Width, layerBounds.Height, PixelFormat.Format32bppPArgb);
         }
+
+        DrawLayer(surface);
 
         var screenDc = GetDC(IntPtr.Zero);
         var memoryDc = CreateCompatibleDC(screenDc);
-        var hBitmap = bitmap.GetHbitmap(Color.FromArgb(0));
+        var hBitmap = surface.GetHbitmap(Color.FromArgb(0));
         var oldBitmap = SelectObject(memoryDc, hBitmap);
 
         try
@@ -104,7 +104,18 @@ public abstract class LayeredWindow : Form
         }
     }
 
-    protected abstract void DrawLayer(Graphics graphics, Rectangle bounds);
+    protected abstract void DrawLayer(Bitmap surface);
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            surface?.Dispose();
+            surface = null;
+        }
+
+        base.Dispose(disposing);
+    }
 
     protected void KeepAboveTaskbar()
     {

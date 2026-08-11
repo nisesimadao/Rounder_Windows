@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace Rounder.Windows;
 
-public sealed record DisplayMonitor(string DeviceName, Rectangle Bounds, bool IsPrimary)
+public sealed record DisplayMonitor(string DeviceName, Rectangle Bounds, bool IsPrimary, double Scale)
 {
     public static IReadOnlyList<DisplayMonitor> GetAll()
     {
@@ -16,7 +16,8 @@ public sealed record DisplayMonitor(string DeviceName, Rectangle Bounds, bool Is
                 monitors.Add(new DisplayMonitor(
                     info.DeviceName,
                     Rectangle.FromLTRB(info.Monitor.Left, info.Monitor.Top, info.Monitor.Right, info.Monitor.Bottom),
-                    (info.Flags & MonitorInfoPrimary) != 0));
+                    (info.Flags & MonitorInfoPrimary) != 0,
+                    GetScaleFactor(monitor)));
             }
 
             return true;
@@ -28,12 +29,32 @@ public sealed record DisplayMonitor(string DeviceName, Rectangle Bounds, bool Is
         }
 
         return Screen.AllScreens
-            .Select(screen => new DisplayMonitor(screen.DeviceName, screen.Bounds, screen.Primary))
+            .Select(screen => new DisplayMonitor(screen.DeviceName, screen.Bounds, screen.Primary, 1.0))
             .ToList();
+    }
+
+    private static double GetScaleFactor(IntPtr monitor)
+    {
+        try
+        {
+            if (GetDpiForMonitor(monitor, MdtEffectiveDpi, out var dpiX, out _) == 0 && dpiX > 0)
+            {
+                return dpiX / 96.0;
+            }
+        }
+        catch (DllNotFoundException)
+        {
+        }
+        catch (EntryPointNotFoundException)
+        {
+        }
+
+        return 1.0;
     }
 
     private const int MonitorInfoPrimary = 1;
     private const int DeviceNameLength = 32;
+    private const int MdtEffectiveDpi = 0;
 
     private delegate bool MonitorEnumProc(IntPtr monitor, IntPtr hdc, IntPtr clipRect, IntPtr data);
 
@@ -63,4 +84,7 @@ public sealed record DisplayMonitor(string DeviceName, Rectangle Bounds, bool Is
 
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfoEx info);
+
+    [DllImport("shcore.dll")]
+    private static extern int GetDpiForMonitor(IntPtr monitor, int dpiType, out uint dpiX, out uint dpiY);
 }

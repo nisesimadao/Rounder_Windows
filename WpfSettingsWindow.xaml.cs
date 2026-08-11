@@ -42,6 +42,11 @@ public partial class WpfSettingsWindow : Window
             ["About"] = AboutSection
         };
         
+        RadiusSlider.ValueChanged += (_, _) => RadiusText.Text = ((int)RadiusSlider.Value).ToString(CultureInfo.InvariantCulture);
+        SpeedSlider.ValueChanged += (_, _) => UpdateGamingValueLabels();
+        GlowSlider.ValueChanged += (_, _) => UpdateGamingValueLabels();
+        BloomSlider.ValueChanged += (_, _) => UpdateGamingValueLabels();
+
         LoadSettings();
         RefreshPresetList();
         SidebarList.SelectedIndex = 0;
@@ -57,7 +62,6 @@ public partial class WpfSettingsWindow : Window
         LaunchAtLoginBox.IsChecked = settings.LaunchAtLogin;
         RadiusText.Text = settings.CornerRadius.ToString(CultureInfo.InvariantCulture);
         RadiusSlider.Value = settings.CornerRadius;
-        RadiusSlider.ValueChanged += (_, _) => RadiusText.Text = ((int)RadiusSlider.Value).ToString(CultureInfo.InvariantCulture);
         selectedColor = ToMediaColor(settings.CornerColor);
         ColorPreview.Background = new SolidColorBrush(selectedColor);
         CutoutStyleBox.SelectedIndex = settings.CornerCutoutStyle switch
@@ -71,10 +75,23 @@ public partial class WpfSettingsWindow : Window
         BottomLeftBox.IsChecked = settings.BottomLeftEnabled;
         BottomRightBox.IsChecked = settings.BottomRightEnabled;
         GamingBox.IsChecked = settings.SuperGamingMode;
-        SpeedText.Text = settings.GamingSpeed.ToString(CultureInfo.InvariantCulture);
-        GlowText.Text = settings.GlowIntensity.ToString(CultureInfo.InvariantCulture);
-        BloomText.Text = settings.BloomWidth.ToString(CultureInfo.InvariantCulture);
+        SpeedSlider.Value = (double)Math.Clamp(settings.GamingSpeed, 0.1m, 5.0m);
+        GlowSlider.Value = (double)Math.Clamp(settings.GlowIntensity, 0.1m, 3.0m);
+        BloomSlider.Value = (double)Math.Clamp(settings.BloomWidth, 0.1m, 3.0m);
+        UpdateGamingValueLabels();
         LoadDisplays();
+    }
+
+    private void UpdateGamingValueLabels()
+    {
+        SpeedValue.Text = SliderDecimal(SpeedSlider).ToString("0.0", CultureInfo.InvariantCulture) + "x";
+        GlowValue.Text = SliderDecimal(GlowSlider).ToString("0.0", CultureInfo.InvariantCulture);
+        BloomValue.Text = SliderDecimal(BloomSlider).ToString("0.0", CultureInfo.InvariantCulture);
+    }
+
+    private static decimal SliderDecimal(Slider slider)
+    {
+        return Math.Round((decimal)slider.Value, 1);
     }
 
     private void LoadDisplays()
@@ -115,9 +132,9 @@ public partial class WpfSettingsWindow : Window
         settings.BottomLeftEnabled = BottomLeftBox.IsChecked == true;
         settings.BottomRightEnabled = BottomRightBox.IsChecked == true;
         settings.SuperGamingMode = GamingBox.IsChecked == true;
-        settings.GamingSpeed = ParseDecimal(SpeedText.Text, 1.0m, 0.1m, 5.0m);
-        settings.GlowIntensity = ParseDecimal(GlowText.Text, 1.0m, 0.1m, 3.0m);
-        settings.BloomWidth = ParseDecimal(BloomText.Text, 1.0m, 0.1m, 3.0m);
+        settings.GamingSpeed = SliderDecimal(SpeedSlider);
+        settings.GlowIntensity = SliderDecimal(GlowSlider);
+        settings.BloomWidth = SliderDecimal(BloomSlider);
         settings.SelectedDisplays = DisplayList.Items.OfType<WpfCheckBox>()
             .Where(item => item.IsChecked == true)
             .Select(item => item.Tag?.ToString())
@@ -425,9 +442,9 @@ public partial class WpfSettingsWindow : Window
         settings.BottomLeftEnabled = BottomLeftBox.IsChecked == true;
         settings.BottomRightEnabled = BottomRightBox.IsChecked == true;
         settings.SuperGamingMode = GamingBox.IsChecked == true;
-        settings.GamingSpeed = ParseDecimal(SpeedText.Text, 1.0m, 0.1m, 5.0m);
-        settings.GlowIntensity = ParseDecimal(GlowText.Text, 1.0m, 0.1m, 3.0m);
-        settings.BloomWidth = ParseDecimal(BloomText.Text, 1.0m, 0.1m, 3.0m);
+        settings.GamingSpeed = SliderDecimal(SpeedSlider);
+        settings.GlowIntensity = SliderDecimal(GlowSlider);
+        settings.BloomWidth = SliderDecimal(BloomSlider);
     }
 
     private void SetColor(MediaColor color)
@@ -439,13 +456,6 @@ public partial class WpfSettingsWindow : Window
     private static int ParseInt(string text, int fallback, int min, int max)
     {
         return int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
-            ? Math.Clamp(value, min, max)
-            : fallback;
-    }
-
-    private static decimal ParseDecimal(string text, decimal fallback, decimal min, decimal max)
-    {
-        return decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
             ? Math.Clamp(value, min, max)
             : fallback;
     }
