@@ -18,6 +18,9 @@ public sealed class AppSettings
     public decimal BloomWidth { get; set; } = 1.0m;
     public CornerCutoutStyle CornerCutoutStyle { get; set; } = CornerCutoutStyle.Rounded;
     public bool LaunchAtLogin { get; set; }
+    public bool ShowTrayIcon { get; set; } = true;
+    public bool DisplaySelectionInitialized { get; set; }
+    public List<string> KnownDisplays { get; set; } = [];
     public List<string> SelectedDisplays { get; set; } = [];
 
     public Color CornerColor
@@ -44,6 +47,9 @@ public sealed class AppSettings
             BloomWidth = BloomWidth,
             CornerCutoutStyle = CornerCutoutStyle,
             LaunchAtLogin = LaunchAtLogin,
+            ShowTrayIcon = ShowTrayIcon,
+            DisplaySelectionInitialized = DisplaySelectionInitialized,
+            KnownDisplays = [.. KnownDisplays],
             SelectedDisplays = [.. SelectedDisplays]
         };
     }

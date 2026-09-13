@@ -39,9 +39,9 @@ public sealed class OverlayManager : IDisposable
         }
 
         var monitors = DisplayMonitor.GetAll();
-        var selected = settings.SelectedDisplays.Count == 0
-            ? monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
-            : settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selected = settings.DisplaySelectionInitialized
+            ? settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var screen in monitors.Where(screen => selected.Contains(screen.DeviceName)))
         {
@@ -56,7 +56,6 @@ public sealed class OverlayManager : IDisposable
     private void AddScreenOverlays(DisplayMonitor screen)
     {
         var bounds = screen.Bounds;
-        // The radius setting is in logical px (macOS points); convert to physical px per monitor.
         var radius = (int)Math.Round(Math.Clamp(settings.CornerRadius, 0, 200) * Math.Max(0.5, screen.Scale));
         if (settings.TopLeftEnabled)
         {

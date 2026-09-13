@@ -1,0 +1,78 @@
+<Window x:Class="Rounder.Windows.PresetEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Edit Preset"
+        Width="520" Height="620"
+        MinWidth="480" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ThemeMode="System"
+        Icon="pack://application:,,,/Assets/rounder.ico">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="22">
+                <TextBlock Text="Preset name" Margin="0,0,0,6"/>
+                <TextBox x:Name="NameBox" Margin="0,0,0,16"/>
+
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="Radius"/><TextBlock x:Name="RadiusValue" Grid.Column="1" Opacity="0.65"/>
+                </Grid>
+                <Slider x:Name="RadiusSlider" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,0,0,16"/>
+
+                <TextBlock Text="Corner shape" Margin="0,0,0,6"/>
+                <ComboBox x:Name="ShapeBox" Margin="0,0,0,16">
+                    <ComboBoxItem Content="Rounded"/>
+                    <ComboBoxItem Content="Squircle"/>
+                    <ComboBoxItem Content="Polygon"/>
+                </ComboBox>
+
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="Corner color" VerticalAlignment="Center"/>
+                    <Border x:Name="ColorPreview" Grid.Column="1" Width="42" Height="24" CornerRadius="4" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Margin="0,0,8,0"/>
+                    <Button Grid.Column="2" Content="Choose…" Click="ChooseColor_Click"/>
+                </Grid>
+
+                <TextBlock Text="Corners" Margin="0,0,0,8"/>
+                <UniformGrid Columns="2" Margin="0,0,0,16">
+                    <CheckBox x:Name="TopLeftBox" Content="Top left" Margin="0,0,12,8"/>
+                    <CheckBox x:Name="TopRightBox" Content="Top right" Margin="0,0,0,8"/>
+                    <CheckBox x:Name="BottomLeftBox" Content="Bottom left" Margin="0,0,12,0"/>
+                    <CheckBox x:Name="BottomRightBox" Content="Bottom right"/>
+                </UniformGrid>
+
+                <CheckBox x:Name="GamingBox" Content="Super Duper Gaming Mode" Margin="0,0,0,12"/>
+                <StackPanel x:Name="GamingControls">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChecked, ElementName=GamingBox}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Grid Margin="0,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Speed"/><TextBlock x:Name="SpeedValue" Grid.Column="1" Opacity="0.65"/></Grid>
+                    <Slider x:Name="SpeedSlider" Minimum="0.1" Maximum="5.0" TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,12"/>
+                    <Grid Margin="0,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Glow intensity"/><TextBlock x:Name="GlowValue" Grid.Column="1" Opacity="0.65"/></Grid>
+                    <Slider x:Name="GlowSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,12"/>
+                    <Grid Margin="0,0,0,4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="Bloom width"/><TextBlock x:Name="BloomValue" Grid.Column="1" Opacity="0.65"/></Grid>
+                    <Slider x:Name="BloomSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0" Padding="14,10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancel" IsCancel="True" MinWidth="88" Margin="0,0,8,0"/>
+                <Button Content="Save" IsDefault="True" MinWidth="88" Click="Save_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

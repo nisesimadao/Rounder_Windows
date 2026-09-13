@@ -1,222 +1,94 @@
 <Window x:Class="Rounder.Windows.WpfSettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Rounder.Windows"
         Title="Rounder Settings"
-        Width="760"
+        Width="900"
         Height="780"
-        MinWidth="640"
-        MinHeight="560"
+        MinWidth="760"
+        MinHeight="620"
         WindowStartupLocation="CenterScreen"
         ThemeMode="System"
-        Background="Transparent"
         Icon="pack://application:,,,/Assets/rounder.ico">
     <Window.Resources>
         <ResourceDictionary>
-            <SolidColorBrush x:Key="RounderWindowBrush" Color="#001F1F1F"/>
-            <SolidColorBrush x:Key="RounderSidebarBrush" Color="#702A2A2A"/>
-            <SolidColorBrush x:Key="RounderPanelBrush" Color="#70303030"/>
-            <SolidColorBrush x:Key="RounderFooterBrush" Color="#7A292929"/>
-            <SolidColorBrush x:Key="RounderBorderBrush" Color="#30FFFFFF"/>
-            <SolidColorBrush x:Key="RounderTextBrush" Color="#F9F9F9"/>
-            <SolidColorBrush x:Key="RounderSecondaryTextBrush" Color="#C7C7C7"/>
-            <SolidColorBrush x:Key="RounderHoverBrush" Color="#2FFFFFFF"/>
-            <SolidColorBrush x:Key="RounderNavSelectedBrush" Color="#2E60CDFF"/>
-            <SolidColorBrush x:Key="RounderNavSelectedBorderBrush" Color="#60CDFF"/>
-
-        <Style TargetType="ListBoxItem" x:Key="SidebarItemStyle">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0,1"/>
-            <Setter Property="MinHeight" Value="38"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource RounderTextBrush}"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Grid SnapsToDevicePixels="True">
-                            <Border x:Name="SelectionRail"
-                                    Width="3"
-                                    Height="18"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"
-                                    CornerRadius="2"
-                                    Background="{DynamicResource RounderNavSelectedBorderBrush}"
-                                    Opacity="0"/>
-                            <Border x:Name="Root"
-                                    Margin="7,0,0,0"
-                                    Background="{TemplateBinding Background}"
-                                    CornerRadius="7"
-                                    Padding="10,0">
-                                <ContentPresenter HorizontalAlignment="Stretch"
-                                                  VerticalAlignment="Center"/>
-                            </Border>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource RounderHoverBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource RounderNavSelectedBrush}"/>
-                                <Setter TargetName="SelectionRail" Property="Opacity" Value="1"/>
-                                <Setter Property="Foreground" Value="{DynamicResource RounderTextBrush}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="ListBoxItem" x:Key="SidebarDividerStyle">
-            <Setter Property="IsHitTestVisible" Value="False"/>
-            <Setter Property="Focusable" Value="False"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Grid Height="22" Margin="10,7,10,5">
-                            <Border Height="1"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource RounderBorderBrush}"
-                                    Opacity="0.45"/>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="TextBlock" x:Key="SidebarGlyphStyle">
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
-            <Setter Property="FontSize" Value="15"/>
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="TextAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
-        </Style>
-
-        <Style TargetType="TextBlock" x:Key="SidebarTextStyle">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="10,0,0,0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/>
-        </Style>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="RounderFluentStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-
-    <Grid Background="{DynamicResource RounderWindowBrush}"
-          TextElement.Foreground="{DynamicResource RounderTextBrush}">
+    <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="190"/>
+            <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Background="{DynamicResource RounderSidebarBrush}"
-                BorderBrush="{DynamicResource RounderBorderBrush}"
-                BorderThickness="0,0,1,0">
-            <DockPanel Margin="12,26,12,12">
-                <Grid DockPanel.Dock="Top" Margin="8,0,4,18">
+        <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                BorderThickness="0,0,1,0"
+                Padding="14">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="4,10,4,18">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Width="34" Height="34" CornerRadius="8" Background="#26000000" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1" Margin="0,0,10,0">
-                        <Image Width="24" Height="24" Source="pack://application:,,,/Assets/rounder.png"/>
+                    <Border Width="38" Height="38" CornerRadius="9" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Margin="0,0,10,0">
+                        <Image Width="28" Height="28" Source="pack://application:,,,/Assets/rounder.png"/>
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="Rounder" FontSize="14" FontWeight="SemiBold"/>
-                        <TextBlock Text="Version 2.1.4" FontSize="11" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
+                        <TextBlock Text="Rounder" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock x:Name="VersionText" Opacity="0.6" FontSize="11"/>
                     </StackPanel>
                 </Grid>
 
                 <ListBox x:Name="SidebarList"
-                         DockPanel.Dock="Top"
-                         Background="Transparent"
+                         SelectionChanged="SidebarList_SelectionChanged"
                          BorderThickness="0"
-                         ItemContainerStyle="{StaticResource SidebarItemStyle}"
+                         Background="Transparent"
+                         ItemContainerStyle="{StaticResource RounderSidebarItemStyle}"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                         SelectionChanged="SidebarList_SelectionChanged">
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled">
                     <ListBoxItem Tag="General">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE713;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="General" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE713;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="General" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Appearance">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE790;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="Appearance" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE790;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Appearance" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Corners">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE9F5;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="Corners" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE9F5;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Corners" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Displays">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE7F4;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="Displays" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE7F4;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Displays" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="Gaming">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE7FC;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="Gaming" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE7FC;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Gaming" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
-                    <ListBoxItem Style="{StaticResource SidebarDividerStyle}"/>
+                    <ListBoxItem Style="{StaticResource RounderSidebarDividerStyle}"/>
                     <ListBoxItem Tag="Presets">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE734;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="Presets" Style="{StaticResource SidebarTextStyle}"/>
-                        </Grid>
-                    </ListBoxItem>
-                    <ListBoxItem Tag="Permissions">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xEA18;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="Permissions" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE734;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="Presets" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
                     <ListBoxItem Tag="About">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="&#xE946;" Style="{StaticResource SidebarGlyphStyle}"/>
-                            <TextBlock Grid.Column="1" Text="About" Style="{StaticResource SidebarTextStyle}"/>
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <local:CenteredGlyph Glyph="&#xE946;" Style="{StaticResource RounderSidebarGlyphStyle}"/>
+                            <TextBlock Grid.Column="1" Text="About" Style="{StaticResource RounderSidebarTextStyle}"/>
                         </Grid>
                     </ListBoxItem>
                 </ListBox>
@@ -233,202 +105,175 @@
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
                           ScrollChanged="DetailScroll_ScrollChanged">
-                <StackPanel Margin="20" x:Name="SectionsPanel">
-                    <StackPanel x:Name="GeneralSection" Tag="General" Margin="0,0,0,28">
-                        <TextBlock Text="General" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <StackPanel>
+                <StackPanel x:Name="SectionsPanel" Margin="26,24,26,30">
+                    <StackPanel x:Name="GeneralSection" Tag="General" Margin="0,0,0,30">
+                        <TextBlock Text="General" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <GroupBox Header="Startup and visibility">
+                            <StackPanel Margin="12">
                                 <CheckBox x:Name="EnabledBox" Content="Enable rounded corners" Margin="0,0,0,12"/>
-                                <Separator Margin="0,0,0,12"/>
-                                <CheckBox x:Name="LaunchAtLoginBox" Content="Launch at login"/>
+                                <CheckBox x:Name="LaunchAtLoginBox" Content="Launch at login" Margin="0,0,0,12"/>
+                                <CheckBox x:Name="ShowTrayIconBox" Content="Show tray icon" ToolTip="When hidden, launch Rounder again to reopen Settings."/>
                             </StackPanel>
-                        </Border>
+                        </GroupBox>
                     </StackPanel>
 
-                    <StackPanel x:Name="AppearanceSection" Tag="Appearance" Margin="0,0,0,28">
-                        <TextBlock Text="Appearance" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <StackPanel>
+                    <StackPanel x:Name="AppearanceSection" Tag="Appearance" Margin="0,0,0,30">
+                        <TextBlock Text="Appearance" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <GroupBox Header="Corner appearance">
+                            <StackPanel Margin="12">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Corner radius" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <TextBox x:Name="RadiusText" Width="58" HorizontalContentAlignment="Center"/>
-                                        <TextBlock Text="px" Margin="6,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
-                                    </StackPanel>
+                                    <TextBlock x:Name="RadiusValue" Grid.Column="1" VerticalAlignment="Center" Opacity="0.65"/>
                                 </Grid>
-                                <Slider x:Name="RadiusSlider" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="1" LargeChange="1" Margin="0,10,0,16"/>
-                                <Separator Margin="0,0,0,16"/>
-                                <TextBlock Text="Corner shape" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,8"/>
-                                <ComboBox x:Name="CutoutStyleBox" HorizontalAlignment="Stretch" Margin="0,0,0,16">
-                                    <ComboBoxItem Content="Rounded"/>
-                                    <ComboBoxItem Content="Squircle"/>
-                                    <ComboBoxItem Content="Polygon cutout"/>
-                                </ComboBox>
-                                <Separator Margin="0,0,0,16"/>
-                                <Grid>
+                                <Slider x:Name="RadiusSlider" Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" Margin="0,8,0,16"/>
+
+                                <TextBlock Text="Corner shape" Margin="0,0,0,6"/>
+                                <UniformGrid Columns="3" Margin="0,0,0,16">
+                                    <RadioButton x:Name="RoundedStyleButton" GroupName="CornerShape" Content="Rounded" Style="{StaticResource RounderSegmentRadioStyle}"/>
+                                    <RadioButton x:Name="SquircleStyleButton" GroupName="CornerShape" Content="Squircle" Style="{StaticResource RounderSegmentRadioStyle}"/>
+                                    <RadioButton x:Name="PolygonStyleButton" GroupName="CornerShape" Content="Polygon" Style="{StaticResource RounderSegmentRadioStyle}" Margin="0"/>
+                                </UniformGrid>
+
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="Corner color" VerticalAlignment="Center"/>
-                                    <Border x:Name="ColorPreview" Grid.Column="1" Width="44" Height="28" CornerRadius="14" BorderThickness="1" BorderBrush="{DynamicResource RounderBorderBrush}"/>
+                                    <Border x:Name="ColorPreview" Grid.Column="1" Width="24" Height="24" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="12"/>
                                 </Grid>
-                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                    <Button Content="Black" Click="Black_Click" Margin="0,0,8,0"/>
-                                    <Button Content="White" Click="White_Click" Margin="0,0,8,0"/>
-                                    <Button Content="Gray" Click="Gray_Click" Margin="0,0,8,0"/>
-                                    <Button Content="Custom..." Click="CustomColor_Click"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <RadioButton x:Name="BlackSwatch" GroupName="CornerColor" Background="Black" Style="{StaticResource RounderColorSwatchStyle}" Click="Black_Click" ToolTip="Black"/>
+                                    <RadioButton x:Name="WhiteSwatch" GroupName="CornerColor" Background="White" Style="{StaticResource RounderColorSwatchStyle}" Click="White_Click" ToolTip="White"/>
+                                    <RadioButton x:Name="GraySwatch" GroupName="CornerColor" Background="Gray" Style="{StaticResource RounderColorSwatchStyle}" Click="Gray_Click" ToolTip="Gray"/>
+                                    <Button Style="{StaticResource RounderIconButtonStyle}" Click="CustomColor_Click" ToolTip="Choose color">
+                                        <local:CenteredGlyph Glyph="&#xE790;" Style="{StaticResource RounderButtonGlyphStyle}"/>
+                                    </Button>
                                 </StackPanel>
                             </StackPanel>
-                        </Border>
+                        </GroupBox>
                     </StackPanel>
 
-                    <StackPanel x:Name="CornersSection" Tag="Corners" Margin="0,0,0,28">
-                        <TextBlock Text="Corners" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <UniformGrid Columns="2">
-                                <CheckBox x:Name="TopLeftBox" Content="Top left" Margin="0,0,20,12"/>
+                    <StackPanel x:Name="CornersSection" Tag="Corners" Margin="0,0,0,30">
+                        <TextBlock Text="Corners" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <GroupBox Header="Visible corners">
+                            <UniformGrid Columns="2" Margin="12">
+                                <CheckBox x:Name="TopLeftBox" Content="Top left" Margin="0,0,18,12"/>
                                 <CheckBox x:Name="TopRightBox" Content="Top right" Margin="0,0,0,12"/>
-                                <CheckBox x:Name="BottomLeftBox" Content="Bottom left" Margin="0,0,20,0"/>
+                                <CheckBox x:Name="BottomLeftBox" Content="Bottom left" Margin="0,0,18,0"/>
                                 <CheckBox x:Name="BottomRightBox" Content="Bottom right"/>
                             </UniformGrid>
-                        </Border>
+                        </GroupBox>
                     </StackPanel>
 
-                    <StackPanel x:Name="DisplaysSection" Tag="Displays" Margin="0,0,0,28">
-                        <Grid Margin="0,0,0,10">
+                    <StackPanel x:Name="DisplaysSection" Tag="Displays" Margin="0,0,0,30">
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Displays" FontSize="22" FontWeight="SemiBold"/>
-                            <Button Grid.Column="1" Content="Refresh monitors" Click="RefreshMonitors_Click"/>
+                            <TextBlock Text="Displays" FontSize="20" FontWeight="SemiBold"/>
+                            <Button Grid.Column="1" Content="Refresh" Click="RefreshMonitors_Click"/>
                         </Grid>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <ListBox x:Name="DisplayList" MinHeight="160" BorderThickness="0" Background="Transparent"/>
-                        </Border>
+                        <GroupBox Header="Target displays">
+                            <ListBox x:Name="DisplayList" BorderThickness="0" Background="Transparent" Margin="8"/>
+                        </GroupBox>
                     </StackPanel>
 
-                    <StackPanel x:Name="GamingSection" Tag="Gaming" Margin="0,0,0,28">
-                        <TextBlock Text="Gaming" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <StackPanel>
-                                <CheckBox x:Name="GamingBox" Content="Enable animated rainbow glow" Margin="0,0,0,16"/>
-                                <Separator Margin="0,0,0,16"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Speed" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="SpeedValue" Grid.Column="1" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
-                                </Grid>
-                                <Slider x:Name="SpeedSlider" Minimum="0.1" Maximum="5.0" TickFrequency="0.1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="0.1" LargeChange="0.1" Margin="0,10,0,16"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Glow intensity" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="GlowValue" Grid.Column="1" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
-                                </Grid>
-                                <Slider x:Name="GlowSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="0.1" LargeChange="0.1" Margin="0,10,0,16"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Bloom width" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="BloomValue" Grid.Column="1" VerticalAlignment="Center" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
-                                </Grid>
-                                <Slider x:Name="BloomSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" SmallChange="0.1" LargeChange="0.1" Margin="0,10,0,0"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel x:Name="PresetsSection" Tag="Presets" Margin="0,0,0,28">
-                        <TextBlock Text="Presets" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="170"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="260"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <ListBox x:Name="PresetList"/>
-                                <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                                    <Button Content="Apply" Margin="0,0,0,8" Click="ApplyPreset_Click"/>
-                                    <Button Content="Save Current..." Margin="0,0,0,8" Click="SaveCurrent_Click"/>
-                                    <Button Content="Edit..." Margin="0,0,0,8" Click="EditPreset_Click"/>
-                                    <Button Content="Delete" Margin="0,0,0,8" Click="DeletePreset_Click"/>
-                                    <Button Content="Import..." Margin="0,0,0,8" Click="ImportPresets_Click"/>
-                                    <Button Content="Export..." Click="ExportPresets_Click"/>
+                    <StackPanel x:Name="GamingSection" Tag="Gaming" Margin="0,0,0,30">
+                        <TextBlock Text="Gaming" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <GroupBox Header="Super Duper Gaming Mode">
+                            <StackPanel Margin="12">
+                                <CheckBox x:Name="GamingBox" Content="Enable animated rainbow glow" Margin="0,0,0,10"/>
+                                <StackPanel x:Name="GamingControls">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsChecked, ElementName=GamingBox}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+                                    <Grid Margin="0,8,0,4">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="Speed"/><TextBlock x:Name="SpeedValue" Grid.Column="1" Opacity="0.65"/>
+                                    </Grid>
+                                    <Slider x:Name="SpeedSlider" Minimum="0.1" Maximum="5.0" TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="Glow intensity"/><TextBlock x:Name="GlowValue" Grid.Column="1" Opacity="0.65"/>
+                                    </Grid>
+                                    <Slider x:Name="GlowSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="0,0,0,10"/>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="Bloom width"/><TextBlock x:Name="BloomValue" Grid.Column="1" Opacity="0.65"/>
+                                    </Grid>
+                                    <Slider x:Name="BloomSlider" Minimum="0.1" Maximum="3.0" TickFrequency="0.1" IsSnapToTickEnabled="True"/>
                                 </StackPanel>
-                                <TextBlock x:Name="PresetDetails" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,0" TextWrapping="Wrap" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
-                            </Grid>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel x:Name="PermissionsSection" Tag="Permissions" Margin="0,0,0,28">
-                        <TextBlock Text="Permissions" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <StackPanel>
-                                <TextBlock Text="Windows does not require Accessibility, Screen Recording, or Automation permissions for Rounder." TextWrapping="Wrap" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,14"/>
-                                <TextBlock Text="Overlay windows: Granted"/>
-                                <TextBlock Text="Display changes: Granted" Margin="0,5,0,0"/>
-                                <TextBlock Text="Startup automation: Optional" Margin="0,5,0,0"/>
                             </StackPanel>
-                        </Border>
+                        </GroupBox>
                     </StackPanel>
 
-                    <StackPanel x:Name="AboutSection" Tag="About" Margin="0,0,0,24">
-                        <TextBlock Text="About" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Border Padding="16" CornerRadius="12" Background="{DynamicResource RounderPanelBrush}" BorderBrush="{DynamicResource RounderBorderBrush}" BorderThickness="1">
-                            <StackPanel>
-                                <TextBlock Text="Developer" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <TextBlock Text="- Nisesimadao - Developer" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,4"/>
-                                <TextBlock Text="- SwiftUI &amp; AppKit implementation" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,16"/>
-                                <TextBlock Text="Technology" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <TextBlock Text="- Core Graphics drawing engine" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,4"/>
-                                <TextBlock Text="- NSWindow overlay system" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,4"/>
-                                <TextBlock Text="- UserDefaults settings management" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,10"/>
-                                <TextBlock Text="- Windows port: .NET 9, WinForms tray/overlay host, WPF settings UI, GDI+, and Win32 window styles" TextWrapping="Wrap" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,16"/>
-                                <TextBlock Text="License" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <TextBlock Text="- MIT License" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,4"/>
-                                <TextBlock Text="- Open source project" Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,16"/>
-                                <Separator Margin="0,0,0,16"/>
-                                <TextBlock Text="Support" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <TextBlock Text="Report bugs and feature requests through the GitHub repository." Foreground="{DynamicResource RounderSecondaryTextBrush}" Margin="0,0,0,10"/>
+                    <StackPanel x:Name="PresetsSection" Tag="Presets" Margin="0,0,0,30">
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="Presets" FontSize="20" FontWeight="SemiBold"/>
+                            <Button Grid.Column="1" Content="Save current…" Click="SaveCurrent_Click"/>
+                        </Grid>
+                        <GroupBox Header="Saved presets">
+                            <ListBox x:Name="PresetList" BorderThickness="0" Background="Transparent" Margin="8" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="4,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding DisplaySummary}" Opacity="0.65" FontSize="12" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                                <Button Content="Apply" Click="ApplyPreset_Click" Margin="0,0,8,0"/>
+                                                <Button Content="Edit" Click="EditPreset_Click" Margin="0,0,8,0"/>
+                                                <Button Content="Delete" Click="DeletePreset_Click"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </GroupBox>
+                    </StackPanel>
+
+                    <StackPanel x:Name="AboutSection" Tag="About" Margin="0,0,0,20">
+                        <TextBlock Text="About" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <GroupBox Header="Rounder for Windows">
+                            <StackPanel Margin="12">
+                                <TextBlock Text="Nisesimadao" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Text=".NET 9 WPF with the built-in Fluent theme" Margin="0,0,0,4"/>
+                                <TextBlock Text="WinForms / Win32 layered windows for the screen overlays" Opacity="0.7" Margin="0,0,0,12"/>
+                                <TextBlock Text="MIT License" Margin="0,0,0,12"/>
                                 <Button Content="Open GitHub" HorizontalAlignment="Left" Click="OpenGithub_Click"/>
                             </StackPanel>
-                        </Border>
+                        </GroupBox>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
-            <Border Grid.Row="1"
-                    BorderBrush="{DynamicResource RounderBorderBrush}"
-                    BorderThickness="0,1,0,0"
-                    Background="{DynamicResource RounderFooterBrush}">
-                <Grid Margin="16,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Button Content="Exit" Click="Exit_Click" Foreground="#C42B1C"/>
-                    <TextBlock Grid.Column="1" Text="Apply updates the live overlays immediately." VerticalAlignment="Center" Margin="16,0,16,0" Foreground="{DynamicResource RounderSecondaryTextBrush}"/>
+            <Border Grid.Row="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0" Padding="14,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Button Content="Exit" Click="Exit_Click"/>
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button Content="Cancel" MinWidth="88" Margin="0,0,8,0" Click="Cancel_Click"/>
-                        <Button Content="Apply" MinWidth="88" Margin="0,0,8,0" Click="Apply_Click"/>
-                        <Button Content="OK" MinWidth="88" Click="Ok_Click"/>
+                        <Button Content="Cancel" Click="Cancel_Click" MinWidth="88" Margin="0,0,8,0"/>
+                        <Button Content="Apply" Click="Apply_Click" MinWidth="88" Margin="0,0,8,0"/>
+                        <Button Content="OK" Click="Ok_Click" MinWidth="88"/>
                     </StackPanel>
                 </Grid>
             </Border>

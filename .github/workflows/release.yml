@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Existing or new release tag, for example v2.1.4. Leave empty to build artifacts only."
+        description: "Existing or new release tag, for example v2.3.1. Leave empty to build artifacts only."
         required: false
         type: string
 

@@ -24,6 +24,14 @@ public sealed class CornerPreset
         set => CornerColorArgb = value.ToArgb();
     }
 
+    public string DisplaySummary => $"Radius: {CornerRadius}px  ·  {CornerCutoutStyle}" + (SuperGamingMode ? "  ·  Gaming" : string.Empty);
+
+    public string CornerSummary => string.Join("  ",
+        CornerGlyph("↖", TopLeftEnabled),
+        CornerGlyph("↗", TopRightEnabled),
+        CornerGlyph("↙", BottomLeftEnabled),
+        CornerGlyph("↘", BottomRightEnabled));
+
     public static CornerPreset FromSettings(string name, AppSettings settings)
     {
         return new CornerPreset
@@ -63,4 +71,6 @@ public sealed class CornerPreset
         var mode = SuperGamingMode ? ", gaming" : "";
         return $"{Name} ({CornerRadius}px, {CornerCutoutStyle}{mode})";
     }
+
+    private static string CornerGlyph(string glyph, bool enabled) => enabled ? glyph : "·";
 }

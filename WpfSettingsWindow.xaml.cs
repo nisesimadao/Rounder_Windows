@@ -1,6 +1,5 @@
-using System.Globalization;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -25,11 +24,7 @@ public partial class WpfSettingsWindow : Window
         this.settings = settings;
         this.presets = presets;
         InitializeComponent();
-        SourceInitialized += (_, _) =>
-        {
-            WpfWindowEffects.ApplyMica(this);
-            KeepWindowInsideWorkingArea();
-        };
+        SourceInitialized += (_, _) => KeepWindowInsideWorkingArea();
         sections = new Dictionary<string, FrameworkElement>(StringComparer.OrdinalIgnoreCase)
         {
             ["General"] = GeneralSection,
@@ -38,15 +33,15 @@ public partial class WpfSettingsWindow : Window
             ["Displays"] = DisplaysSection,
             ["Gaming"] = GamingSection,
             ["Presets"] = PresetsSection,
-            ["Permissions"] = PermissionsSection,
             ["About"] = AboutSection
         };
-        
-        RadiusSlider.ValueChanged += (_, _) => RadiusText.Text = ((int)RadiusSlider.Value).ToString(CultureInfo.InvariantCulture);
+
+        RadiusSlider.ValueChanged += (_, _) => RadiusValue.Text = $"{(int)RadiusSlider.Value} px";
         SpeedSlider.ValueChanged += (_, _) => UpdateGamingValueLabels();
         GlowSlider.ValueChanged += (_, _) => UpdateGamingValueLabels();
         BloomSlider.ValueChanged += (_, _) => UpdateGamingValueLabels();
 
+        VersionText.Text = $"Version {typeof(WpfSettingsWindow).Assembly.GetName().Version?.ToString(3) ?? "Unknown"}";
         LoadSettings();
         RefreshPresetList();
         SidebarList.SelectedIndex = 0;
@@ -56,20 +51,42 @@ public partial class WpfSettingsWindow : Window
     public event EventHandler<AppSettings>? SettingsApplied;
     public event EventHandler? PresetsChanged;
 
+    public void ReloadFrom(AppSettings updated)
+    {
+        settings.HasLaunchedBefore = updated.HasLaunchedBefore;
+        settings.IsEnabled = updated.IsEnabled;
+        settings.CornerRadius = updated.CornerRadius;
+        settings.CornerColorArgb = updated.CornerColorArgb;
+        settings.TopLeftEnabled = updated.TopLeftEnabled;
+        settings.TopRightEnabled = updated.TopRightEnabled;
+        settings.BottomLeftEnabled = updated.BottomLeftEnabled;
+        settings.BottomRightEnabled = updated.BottomRightEnabled;
+        settings.SuperGamingMode = updated.SuperGamingMode;
+        settings.GamingSpeed = updated.GamingSpeed;
+        settings.GlowIntensity = updated.GlowIntensity;
+        settings.BloomWidth = updated.BloomWidth;
+        settings.CornerCutoutStyle = updated.CornerCutoutStyle;
+        settings.LaunchAtLogin = updated.LaunchAtLogin;
+        settings.ShowTrayIcon = updated.ShowTrayIcon;
+        settings.DisplaySelectionInitialized = updated.DisplaySelectionInitialized;
+        settings.KnownDisplays = [.. updated.KnownDisplays];
+        settings.SelectedDisplays = [.. updated.SelectedDisplays];
+        LoadSettings();
+    }
+
     private void LoadSettings()
     {
         EnabledBox.IsChecked = settings.IsEnabled;
         LaunchAtLoginBox.IsChecked = settings.LaunchAtLogin;
-        RadiusText.Text = settings.CornerRadius.ToString(CultureInfo.InvariantCulture);
+        ShowTrayIconBox.IsChecked = settings.ShowTrayIcon;
         RadiusSlider.Value = settings.CornerRadius;
+        RadiusValue.Text = $"{settings.CornerRadius} px";
         selectedColor = ToMediaColor(settings.CornerColor);
         ColorPreview.Background = new SolidColorBrush(selectedColor);
-        CutoutStyleBox.SelectedIndex = settings.CornerCutoutStyle switch
-        {
-            CornerCutoutStyle.Squircle => 1,
-            CornerCutoutStyle.Polygon => 2,
-            _ => 0
-        };
+        UpdateColorSwatches();
+        RoundedStyleButton.IsChecked = settings.CornerCutoutStyle == CornerCutoutStyle.Rounded;
+        SquircleStyleButton.IsChecked = settings.CornerCutoutStyle == CornerCutoutStyle.Squircle;
+        PolygonStyleButton.IsChecked = settings.CornerCutoutStyle == CornerCutoutStyle.Polygon;
         TopLeftBox.IsChecked = settings.TopLeftEnabled;
         TopRightBox.IsChecked = settings.TopRightEnabled;
         BottomLeftBox.IsChecked = settings.BottomLeftEnabled;
@@ -89,28 +106,25 @@ public partial class WpfSettingsWindow : Window
         BloomValue.Text = SliderDecimal(BloomSlider).ToString("0.0", CultureInfo.InvariantCulture);
     }
 
-    private static decimal SliderDecimal(Slider slider)
-    {
-        return Math.Round((decimal)slider.Value, 1);
-    }
+    private static decimal SliderDecimal(Slider slider) => Math.Round((decimal)slider.Value, 1);
 
     private void LoadDisplays()
     {
         DisplayList.Items.Clear();
         var monitors = DisplayMonitor.GetAll();
-        var selected = settings.SelectedDisplays.Count == 0
-            ? monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase)
-            : settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selected = settings.DisplaySelectionInitialized
+            ? settings.SelectedDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : monitors.Select(screen => screen.DeviceName).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var screen in monitors)
         {
-            var label = $"{screen.DeviceName}  {screen.Bounds.Width}x{screen.Bounds.Height}" + (screen.IsPrimary ? "  Primary" : "");
+            var label = $"{screen.DeviceName}  {screen.Bounds.Width}×{screen.Bounds.Height}" + (screen.IsPrimary ? "  Primary" : "");
             DisplayList.Items.Add(new WpfCheckBox
             {
                 Content = label,
                 Tag = screen.DeviceName,
                 IsChecked = selected.Contains(screen.DeviceName),
-                Margin = new Thickness(0, 4, 0, 4)
+                Margin = new Thickness(4, 5, 4, 5)
             });
         }
     }
@@ -119,14 +133,10 @@ public partial class WpfSettingsWindow : Window
     {
         settings.IsEnabled = EnabledBox.IsChecked == true;
         settings.LaunchAtLogin = LaunchAtLoginBox.IsChecked == true;
-        settings.CornerRadius = ParseInt(RadiusText.Text, 20, 0, 40);
+        settings.ShowTrayIcon = ShowTrayIconBox.IsChecked == true;
+        settings.CornerRadius = (int)Math.Round(RadiusSlider.Value);
         settings.CornerColor = ToDrawingColor(selectedColor);
-        settings.CornerCutoutStyle = CutoutStyleBox.SelectedIndex switch
-        {
-            1 => CornerCutoutStyle.Squircle,
-            2 => CornerCutoutStyle.Polygon,
-            _ => CornerCutoutStyle.Rounded
-        };
+        settings.CornerCutoutStyle = SelectedCornerStyle();
         settings.TopLeftEnabled = TopLeftBox.IsChecked == true;
         settings.TopRightEnabled = TopRightBox.IsChecked == true;
         settings.BottomLeftEnabled = BottomLeftBox.IsChecked == true;
@@ -141,13 +151,8 @@ public partial class WpfSettingsWindow : Window
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Select(value => value!)
             .ToList();
-
-        if (settings.SelectedDisplays.Count == 0)
-        {
-            System.Windows.MessageBox.Show(this, "Select at least one monitor.", "Rounder", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
+        settings.DisplaySelectionInitialized = true;
+        settings.KnownDisplays = DisplayMonitor.GetAll().Select(screen => screen.DeviceName).ToList();
         SettingsApplied?.Invoke(this, settings.Clone());
     }
 
@@ -155,27 +160,16 @@ public partial class WpfSettingsWindow : Window
     {
         PresetList.ItemsSource = null;
         PresetList.ItemsSource = presets;
-        if (PresetList.SelectedIndex < 0 && presets.Count > 0)
-        {
-            PresetList.SelectedIndex = 0;
-        }
-
-        UpdatePresetDetails();
     }
 
     private void SidebarList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (selectingFromScroll)
-        {
-            return;
-        }
-
+        if (selectingFromScroll) return;
         if (SidebarList.SelectedItem is not ListBoxItem { Tag: string tag } || !sections.TryGetValue(tag, out var section))
         {
             RestoreCurrentSidebarSelection();
             return;
         }
-
         selectingFromSidebar = true;
         currentSectionKey = tag;
         ScrollSectionIntoView(section);
@@ -184,109 +178,73 @@ public partial class WpfSettingsWindow : Window
 
     private void DetailScroll_ScrollChanged(object sender, ScrollChangedEventArgs e)
     {
-        if (selectingFromSidebar)
-        {
-            return;
-        }
-
+        if (selectingFromSidebar) return;
         var current = FindCurrentVisibleSection();
-
-        if (current is null)
-        {
-            return;
-        }
-
-        if (string.Equals(currentSectionKey, current, StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
+        if (current is null || string.Equals(currentSectionKey, current, StringComparison.OrdinalIgnoreCase)) return;
         var item = FindSidebarItem(current);
-        if (item is not null && !ReferenceEquals(SidebarList.SelectedItem, item))
-        {
-            selectingFromScroll = true;
-            currentSectionKey = current;
-            SidebarList.SelectedItem = item;
-            item.BringIntoView();
-            selectingFromScroll = false;
-        }
+        if (item is null || ReferenceEquals(SidebarList.SelectedItem, item)) return;
+        selectingFromScroll = true;
+        currentSectionKey = current;
+        SidebarList.SelectedItem = item;
+        item.BringIntoView();
+        selectingFromScroll = false;
     }
 
     private void ScrollSectionIntoView(FrameworkElement section)
     {
-        if (!section.IsVisible)
-        {
-            return;
-        }
-
+        if (!section.IsVisible) return;
         var position = section.TransformToAncestor(SectionsPanel).Transform(new System.Windows.Point(0, 0));
-        var targetOffset = Math.Clamp(position.Y, 0, DetailScroll.ScrollableHeight);
-        DetailScroll.ScrollToVerticalOffset(targetOffset);
+        DetailScroll.ScrollToVerticalOffset(Math.Clamp(position.Y, 0, DetailScroll.ScrollableHeight));
     }
 
     private string? FindCurrentVisibleSection()
     {
-        if (sections.Count == 0)
-        {
-            return null;
-        }
-
         var activationLine = DetailScroll.VerticalOffset + 72;
-        var visible = sections
-            .Select(pair => new
+        return sections.Select(pair => new
             {
                 pair.Key,
                 Top = pair.Value.TransformToAncestor(SectionsPanel).Transform(new System.Windows.Point(0, 0)).Y
             })
             .Where(item => item.Top <= activationLine)
             .OrderByDescending(item => item.Top)
-            .FirstOrDefault();
-
-        return visible?.Key ?? sections.First().Key;
+            .Select(item => item.Key)
+            .FirstOrDefault() ?? sections.Keys.FirstOrDefault();
     }
 
-    private ListBoxItem? FindSidebarItem(string tag)
-    {
-        return SidebarList.Items
-            .OfType<ListBoxItem>()
-            .FirstOrDefault(candidate => string.Equals(candidate.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
-    }
+    private ListBoxItem? FindSidebarItem(string tag) => SidebarList.Items
+        .OfType<ListBoxItem>()
+        .FirstOrDefault(candidate => string.Equals(candidate.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
 
     private void RestoreCurrentSidebarSelection()
     {
-        if (currentSectionKey is null)
-        {
-            return;
-        }
-
+        if (currentSectionKey is null) return;
         var item = FindSidebarItem(currentSectionKey);
-        if (item is null || ReferenceEquals(SidebarList.SelectedItem, item))
-        {
-            return;
-        }
-
+        if (item is null || ReferenceEquals(SidebarList.SelectedItem, item)) return;
         selectingFromScroll = true;
         SidebarList.SelectedItem = item;
         selectingFromScroll = false;
     }
 
-    private CornerPreset? SelectedPreset()
+    private void RefreshMonitors_Click(object sender, RoutedEventArgs e)
     {
-        return PresetList.SelectedItem as CornerPreset;
-    }
-
-    private void UpdatePresetDetails()
-    {
-        if (SelectedPreset() is not { } preset)
+        var knownInView = DisplayList.Items.OfType<WpfCheckBox>()
+            .Select(item => item.Tag?.ToString()).Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selectedInView = DisplayList.Items.OfType<WpfCheckBox>()
+            .Where(item => item.IsChecked == true)
+            .Select(item => item.Tag?.ToString()).Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var current = DisplayMonitor.GetAll();
+        foreach (var monitor in current.Where(monitor => !knownInView.Contains(monitor.DeviceName)))
         {
-            PresetDetails.Text = "No preset selected.";
-            return;
+            selectedInView.Add(monitor.DeviceName);
         }
-
-        PresetDetails.Text = $"{preset.Name}: {preset.CornerRadius}px, {preset.CornerCutoutStyle}, {System.Drawing.ColorTranslator.ToHtml(preset.CornerColor)}";
+        settings.DisplaySelectionInitialized = true;
+        settings.SelectedDisplays = [.. selectedInView];
+        settings.KnownDisplays = current.Select(monitor => monitor.DeviceName).ToList();
+        LoadDisplays();
     }
 
-    private void RefreshMonitors_Click(object sender, RoutedEventArgs e) => LoadDisplays();
     private void Black_Click(object sender, RoutedEventArgs e) => SetColor(Colors.Black);
     private void White_Click(object sender, RoutedEventArgs e) => SetColor(Colors.White);
     private void Gray_Click(object sender, RoutedEventArgs e) => SetColor(Colors.Gray);
@@ -302,11 +260,7 @@ public partial class WpfSettingsWindow : Window
 
     private void ApplyPreset_Click(object sender, RoutedEventArgs e)
     {
-        if (SelectedPreset() is not { } preset)
-        {
-            return;
-        }
-
+        if (sender is not System.Windows.Controls.Button { DataContext: CornerPreset preset }) return;
         preset.ApplyTo(settings);
         LoadSettings();
         Apply();
@@ -315,12 +269,8 @@ public partial class WpfSettingsWindow : Window
     private void SaveCurrent_Click(object sender, RoutedEventArgs e)
     {
         ApplyControlsToSettingsOnly();
-        var name = PromptDialog.Show("New Preset", "Preset name:");
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return;
-        }
-
+        var name = PromptDialogWindow.Show(this, "New Preset", "Preset name:");
+        if (string.IsNullOrWhiteSpace(name)) return;
         presets.Add(CornerPreset.FromSettings(name, settings));
         RefreshPresetList();
         PresetsChanged?.Invoke(this, EventArgs.Empty);
@@ -328,13 +278,9 @@ public partial class WpfSettingsWindow : Window
 
     private void EditPreset_Click(object sender, RoutedEventArgs e)
     {
-        if (SelectedPreset() is not { } preset)
-        {
-            return;
-        }
-
-        using var editor = new PresetEditorForm(preset);
-        if (editor.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (sender is not System.Windows.Controls.Button { DataContext: CornerPreset preset }) return;
+        var editor = new PresetEditorWindow(preset) { Owner = this };
+        if (editor.ShowDialog() == true)
         {
             RefreshPresetList();
             PresetsChanged?.Invoke(this, EventArgs.Empty);
@@ -343,47 +289,12 @@ public partial class WpfSettingsWindow : Window
 
     private void DeletePreset_Click(object sender, RoutedEventArgs e)
     {
-        if (SelectedPreset() is not { } preset)
-        {
-            return;
-        }
-
+        if (sender is not System.Windows.Controls.Button { DataContext: CornerPreset preset }) return;
         if (System.Windows.MessageBox.Show(this, $"Delete '{preset.Name}'?", "Rounder", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
         {
             presets.Remove(preset);
             RefreshPresetList();
             PresetsChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    private void ImportPresets_Click(object sender, RoutedEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.OpenFileDialog { Filter = "Rounder presets (*.json)|*.json|JSON files (*.json)|*.json|All files (*.*)|*.*" };
-        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-        {
-            return;
-        }
-
-        var imported = JsonStore.ReadPresetFile(dialog.FileName);
-        foreach (var preset in imported.Where(preset => presets.All(existing => !string.Equals(existing.Name, preset.Name, StringComparison.OrdinalIgnoreCase))))
-        {
-            presets.Add(preset);
-        }
-
-        RefreshPresetList();
-        PresetsChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void ExportPresets_Click(object sender, RoutedEventArgs e)
-    {
-        using var dialog = new System.Windows.Forms.SaveFileDialog
-        {
-            Filter = "Rounder presets (*.json)|*.json|JSON files (*.json)|*.json|All files (*.*)|*.*",
-            FileName = "rounder_presets.json"
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            JsonStore.WritePresetFile(dialog.FileName, presets);
         }
     }
 
@@ -394,17 +305,14 @@ public partial class WpfSettingsWindow : Window
         Close();
         System.Windows.Forms.Application.Exit();
     }
-
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
         Apply();
         Close();
     }
 
-    private void OpenGithub_Click(object sender, RoutedEventArgs e)
-    {
+    private void OpenGithub_Click(object sender, RoutedEventArgs e) =>
         Process.Start(new ProcessStartInfo("https://github.com/nisesimadao/rounder_windows") { UseShellExecute = true });
-    }
 
     private void KeepWindowInsideWorkingArea()
     {
@@ -418,7 +326,6 @@ public partial class WpfSettingsWindow : Window
         var workingHeight = bottomRight.Y - topLeft.Y;
         var width = Math.Min(Width, Math.Max(MinWidth, workingWidth - 32));
         var height = Math.Min(Height, Math.Max(MinHeight, workingHeight - 32));
-
         Width = width;
         Height = height;
         Left = topLeft.X + Math.Max(16, (workingWidth - width) / 2);
@@ -429,14 +336,10 @@ public partial class WpfSettingsWindow : Window
     {
         settings.IsEnabled = EnabledBox.IsChecked == true;
         settings.LaunchAtLogin = LaunchAtLoginBox.IsChecked == true;
-        settings.CornerRadius = ParseInt(RadiusText.Text, 20, 0, 40);
+        settings.ShowTrayIcon = ShowTrayIconBox.IsChecked == true;
+        settings.CornerRadius = (int)Math.Round(RadiusSlider.Value);
         settings.CornerColor = ToDrawingColor(selectedColor);
-        settings.CornerCutoutStyle = CutoutStyleBox.SelectedIndex switch
-        {
-            1 => CornerCutoutStyle.Squircle,
-            2 => CornerCutoutStyle.Polygon,
-            _ => CornerCutoutStyle.Rounded
-        };
+        settings.CornerCutoutStyle = SelectedCornerStyle();
         settings.TopLeftEnabled = TopLeftBox.IsChecked == true;
         settings.TopRightEnabled = TopRightBox.IsChecked == true;
         settings.BottomLeftEnabled = BottomLeftBox.IsChecked == true;
@@ -445,70 +348,31 @@ public partial class WpfSettingsWindow : Window
         settings.GamingSpeed = SliderDecimal(SpeedSlider);
         settings.GlowIntensity = SliderDecimal(GlowSlider);
         settings.BloomWidth = SliderDecimal(BloomSlider);
+        settings.DisplaySelectionInitialized = true;
+        settings.KnownDisplays = DisplayMonitor.GetAll().Select(screen => screen.DeviceName).ToList();
+    }
+
+    private CornerCutoutStyle SelectedCornerStyle()
+    {
+        if (SquircleStyleButton.IsChecked == true) return CornerCutoutStyle.Squircle;
+        if (PolygonStyleButton.IsChecked == true) return CornerCutoutStyle.Polygon;
+        return CornerCutoutStyle.Rounded;
     }
 
     private void SetColor(MediaColor color)
     {
         selectedColor = color;
         ColorPreview.Background = new SolidColorBrush(color);
+        UpdateColorSwatches();
     }
 
-    private static int ParseInt(string text, int fallback, int min, int max)
+    private void UpdateColorSwatches()
     {
-        return int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)
-            ? Math.Clamp(value, min, max)
-            : fallback;
+        BlackSwatch.IsChecked = selectedColor == Colors.Black;
+        WhiteSwatch.IsChecked = selectedColor == Colors.White;
+        GraySwatch.IsChecked = selectedColor == Colors.Gray;
     }
 
-    private static MediaColor ToMediaColor(System.Drawing.Color color)
-    {
-        return MediaColor.FromArgb(color.A, color.R, color.G, color.B);
-    }
-
-    private static System.Drawing.Color ToDrawingColor(MediaColor color)
-    {
-        return System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
-    }
-
-}
-
-internal static class WpfWindowEffects
-{
-    private const int DwmwaUseImmersiveDarkMode = 20;
-    private const int DwmwaWindowCornerPreference = 33;
-    private const int DwmwaSystemBackdropType = 38;
-    private const int DwmwcpRound = 2;
-    private const int DwmSystemBackdropMica = 2;
-
-    public static void ApplyMica(Window window)
-    {
-        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))
-        {
-            return;
-        }
-
-        if (PresentationSource.FromVisual(window) is HwndSource source)
-        {
-            source.CompositionTarget.BackgroundColor = Colors.Transparent;
-        }
-
-        var handle = new WindowInteropHelper(window).Handle;
-        var dark = 1;
-        _ = DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref dark, sizeof(int));
-
-        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
-        {
-            var rounded = DwmwcpRound;
-            _ = DwmSetWindowAttribute(handle, DwmwaWindowCornerPreference, ref rounded, sizeof(int));
-        }
-
-        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
-        {
-            var backdrop = DwmSystemBackdropMica;
-            _ = DwmSetWindowAttribute(handle, DwmwaSystemBackdropType, ref backdrop, sizeof(int));
-        }
-    }
-
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int pvAttribute, int cbAttribute);
+    private static MediaColor ToMediaColor(System.Drawing.Color color) => MediaColor.FromArgb(color.A, color.R, color.G, color.B);
+    private static System.Drawing.Color ToDrawingColor(MediaColor color) => System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
 }

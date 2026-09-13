@@ -16,3 +16,6 @@ artifacts/
 
 # Log files
 *.log
+
+# Local agent workspace
+.claude/

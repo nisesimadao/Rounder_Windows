@@ -1,7 +1,7 @@
 #define MyAppName "Rounder for Windows"
 #define MyAppExeName "Rounder_Windows.exe"
 #ifndef MyAppVersion
-#define MyAppVersion "2.1.4"
+#define MyAppVersion "2.3.1"
 #endif
 #ifndef PublishDir
 #define PublishDir "..\artifacts\release\Rounder_Windows-win-x64-singlefile"

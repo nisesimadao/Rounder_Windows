@@ -30,7 +30,7 @@ public static class StartupManager
                 var executable = Environment.ProcessPath;
                 if (!string.IsNullOrWhiteSpace(executable))
                 {
-                    key.SetValue(ValueName, $"\"{executable}\"");
+                    key.SetValue(ValueName, $"\"{executable}\" --background");
                 }
             }
             else

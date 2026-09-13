@@ -1,0 +1,119 @@
+<Window x:Class="Rounder.Windows.TrayPanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Rounder.Windows"
+        Title="Rounder"
+        Width="380"
+        SizeToContent="Height"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ThemeMode="System"
+        Deactivated="Window_Deactivated"
+        Loaded="Window_Loaded">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="RounderFluentStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border Padding="10"
+            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderThickness="1"
+            CornerRadius="8">
+        <StackPanel>
+            <CheckBox x:Name="EnabledBox" Content="Enable rounded corners" Click="EnabledBox_Click" Margin="0,0,0,8"/>
+            <Separator/>
+
+            <Grid Margin="0,8,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="88"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="42"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Radius" VerticalAlignment="Center"/>
+                <Slider x:Name="RadiusSlider" Grid.Column="1"
+                        Minimum="0" Maximum="40" TickFrequency="1"
+                        IsSnapToTickEnabled="True" IsMoveToPointEnabled="True"
+                        ValueChanged="RadiusSlider_ValueChanged"
+                        Margin="4,0,8,0"/>
+                <TextBlock x:Name="RadiusValue" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" Opacity="0.65"/>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="88"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Shape" VerticalAlignment="Center"/>
+                <UniformGrid Grid.Column="1" Columns="3">
+                    <RadioButton x:Name="RoundedShapeButton" GroupName="TrayCornerShape" Tag="0" Content="Rounded" Style="{StaticResource RounderSegmentRadioStyle}" Click="ShapeButton_Click"/>
+                    <RadioButton x:Name="SquircleShapeButton" GroupName="TrayCornerShape" Tag="1" Content="Squircle" Style="{StaticResource RounderSegmentRadioStyle}" Click="ShapeButton_Click"/>
+                    <RadioButton x:Name="PolygonShapeButton" GroupName="TrayCornerShape" Tag="2" Content="Polygon" Style="{StaticResource RounderSegmentRadioStyle}" Margin="0" Click="ShapeButton_Click"/>
+                </UniformGrid>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="88"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Color" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton x:Name="BlackSwatch" GroupName="TrayCornerColor" Background="Black" Style="{StaticResource RounderColorSwatchStyle}" Click="Black_Click" ToolTip="Black"/>
+                    <RadioButton x:Name="WhiteSwatch" GroupName="TrayCornerColor" Background="White" Style="{StaticResource RounderColorSwatchStyle}" Click="White_Click" ToolTip="White"/>
+                    <RadioButton x:Name="GraySwatch" GroupName="TrayCornerColor" Background="Gray" Style="{StaticResource RounderColorSwatchStyle}" Click="Gray_Click" ToolTip="Gray"/>
+                    <Button Style="{StaticResource RounderIconButtonStyle}" Click="MoreColors_Click" ToolTip="Choose color">
+                        <local:CenteredGlyph Glyph="&#xE790;" Style="{StaticResource RounderButtonGlyphStyle}"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="88"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Corners" VerticalAlignment="Top" Margin="0,3,0,0"/>
+                <UniformGrid Grid.Column="1" Columns="2">
+                    <CheckBox x:Name="TopLeftBox" Content="Top left" Click="CornerBox_Click" Margin="0,0,4,2"/>
+                    <CheckBox x:Name="TopRightBox" Content="Top right" Click="CornerBox_Click" Margin="0,0,0,2"/>
+                    <CheckBox x:Name="BottomLeftBox" Content="Bottom left" Click="CornerBox_Click" Margin="0,0,4,0"/>
+                    <CheckBox x:Name="BottomRightBox" Content="Bottom right" Click="CornerBox_Click"/>
+                </UniformGrid>
+            </Grid>
+
+            <Separator/>
+            <CheckBox x:Name="GamingBox" Content="Super Duper Gaming Mode" Click="GamingBox_Click" Margin="0,8,0,8"/>
+            <Separator/>
+
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Width="18" Height="18" Source="pack://application:,,,/Assets/rounder.png" Margin="0,0,7,0"/>
+                    <TextBlock Text="Rounder" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Button Grid.Column="1" Click="Settings_Click" MinWidth="104" Margin="8,0,6,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <local:CenteredGlyph Glyph="&#xE713;" Style="{StaticResource RounderButtonGlyphStyle}"/>
+                        <TextBlock Grid.Column="1" Text="Settings…" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </Grid>
+                </Button>
+                <Button Grid.Column="2" Click="Quit_Click" MinWidth="76">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <local:CenteredGlyph Glyph="&#xE7E8;" Style="{StaticResource RounderButtonGlyphStyle}"/>
+                        <TextBlock Grid.Column="1" Text="Quit" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </Grid>
+                </Button>
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>
